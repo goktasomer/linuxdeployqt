@@ -16,7 +16,7 @@ The following command prints the basic usage information. Also detailed usage in
 ./linuxdeployqt-continuous-x86_64.AppImage -unsupported-bundle-everything -unsupported-allow-new-glibc
 ```
 
-## Example usage:
+### Example usage:
 
 Don't forget to modify the code below according to your project's needs before executing.
 
