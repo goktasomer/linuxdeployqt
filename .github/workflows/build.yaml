@@ -1,0 +1,53 @@
+name: Automated GitHub Releases
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: omergoktas:qt6bionic
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure the build machine
+      run: |
+        apt-get update -y
+        apt-get install -y desktop-file-utils patchelf
+
+    - name: Configure CMake
+      run: cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --parallel --config ${{env.BUILD_TYPE}}
+
+    - name: Pack an app image
+      run: |
+        wget "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+        chmod +x appimagetool-x86_64.AppImage
+        ./appimagetool-x86_64.AppImage --appimage-extract
+        cp squashfs-root/usr/bin/* /usr/local/bin/
+        cp -r squashfs-root/usr/lib/appimagekit /usr/local/lib/
+        chmod +rx /usr/local/lib/appimagekit
+        rm -rf squashfs-root
+        mkdir -p ${{github.workspace}}/linuxdeployqt.AppDir/usr/{bin,lib}
+        cp /usr/bin/{patchelf,desktop-file-validate} /usr/local/bin/{appimagetool,zsyncmake} ${{github.workspace}}/linuxdeployqt.AppDir/usr/bin/
+        cp ${{github.workspace}}/build/linuxdeployqt ${{github.workspace}}/linuxdeployqt.AppDir/usr/bin/
+        cp -r /usr/local/lib/appimagekit ${{github.workspace}}/linuxdeployqt.AppDir/usr/lib/
+        chmod +x ${{github.workspace}}/linuxdeployqt.AppDir/AppRun
+        export VERSION=continuous
+        /home/qt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract
+        ./squashfs-root/AppRun ${{github.workspace}}/linuxdeployqt.AppDir/linuxdeployqt.desktop -verbose=3 -appimage -executable=${{github.workspace}}/linuxdeployqt.AppDir/usr/bin/desktop-file-validate
+
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "continuous"
+        title: "Latest"
