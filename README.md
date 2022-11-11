@@ -13,7 +13,7 @@ Download the latest prebuilt binary from [here](https://github.com/omergoktas/li
 The following command prints the basic usage information. Also detailed usage information can be found on the upstream project's GitHub [page](https://github.com/probonopd/linuxdeployqt). Be aware that there are undocumented features (i.e., [see](https://github.com/probonopd/linuxdeployqt/issues/340#issuecomment-452025959)).
 
 ```bash
-    ./linuxdeployqt-continuous-x86_64.AppImage -unsupported-bundle-everything -unsupported-allow-new-glibc
+./linuxdeployqt-continuous-x86_64.AppImage -unsupported-bundle-everything -unsupported-allow-new-glibc
 ```
 
 ## Example usage:
@@ -21,20 +21,20 @@ The following command prints the basic usage information. Also detailed usage in
 Don't forget to modify the code below according to your project's needs before executing.
 
 ```bash
-    # Set PATH variable to the location where the Qt is installed
-    export QT_PATH=/path/to/Qt/6.4.0/gcc_64
-    export PATH=$PATH:$QT_PATH/bin:$QT_PATH/lib
+# Set PATH variable to the location where the Qt is installed
+export QT_PATH=/path/to/Qt/6.4.0/gcc_64
+export PATH=$PATH:$QT_PATH/bin:$QT_PATH/lib
     
-    # Build and install your project
-    cmake -S yourproject/ -B build/
-    cmake --build build/ --parallel
-    cmake --install build/ --prefix install
+# Build and install your project
+cmake -S yourproject/ -B build/
+cmake --build build/ --parallel
+cmake --install build/ --prefix install
 
-    # Deploy ALL dependencies (assuming the executable installed to install/bin/app in previous step)
-    ./linuxdeployqt-continuous-x86_64.AppImage install/bin/app -unsupported-bundle-everything
+# Deploy ALL dependencies (assuming the executable installed to install/bin/app in previous step)
+./linuxdeployqt-continuous-x86_64.AppImage install/bin/app -unsupported-bundle-everything
     
-    # Alternatively, you can choose to deploy only a minimal set of dependencies
-    ./linuxdeployqt-continuous-x86_64.AppImage install/bin/app -unsupported-allow-new-glibc
+# Alternatively, you can choose to deploy only a minimal set of dependencies
+./linuxdeployqt-continuous-x86_64.AppImage install/bin/app -unsupported-allow-new-glibc
 ```
 
 ## How to build
