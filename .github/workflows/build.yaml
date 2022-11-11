@@ -57,4 +57,5 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "continuous"
         title: "latest"
+        prerelease: false
         files: linuxdeployqt-continuous-x86_64.AppImage
