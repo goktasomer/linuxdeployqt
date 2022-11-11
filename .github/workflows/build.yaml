@@ -22,7 +22,7 @@ jobs:
       run: |
         echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" >> $GITHUB_ENV
         apt-get update -y
-        apt-get install -y desktop-file-utils patchelf
+        apt-get install -y desktop-file-utils patchelf libgpgme11-dev
 
     - name: Configure CMake
       shell: bash
