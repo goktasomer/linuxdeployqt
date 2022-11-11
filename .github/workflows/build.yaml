@@ -12,7 +12,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: omergoktas:qt6bionic
+    container: omergoktas:qt6bionic:latest
 
     steps:
     - uses: actions/checkout@v3
