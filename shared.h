@@ -87,7 +87,7 @@ QDebug operator<<(QDebug debug, const LibraryInfo &info);
 
 class AppDirInfo
 {
-    public:
+public:
     QString path;
     QString binaryPath;
     QStringList libraryPaths;

@@ -48,9 +48,7 @@ int main(int argc, char **argv)
 
     // print version statement
     std::stringstream version;
-    version << "linuxdeployqt " << LINUXDEPLOYQT_VERSION
-            << " (commit " << LINUXDEPLOYQT_GIT_COMMIT << "), "
-            << "build " << BUILD_NUMBER << " built on " << BUILD_DATE;
+    version << "linuxdeployqt " << "v2.0.0";
     qInfo().noquote() << QString::fromStdString(version.str());
 
     bool plugins = true;
@@ -61,7 +59,7 @@ int main(int argc, char **argv)
     extern bool fhsLikeMode;
     extern QString fhsPrefix;
     extern QStringList librarySearchPath;
-    extern bool alwaysOwerwriteEnabled;    
+    extern bool alwaysOwerwriteEnabled;
     QStringList additionalExecutables;
     bool qmldirArgumentUsed = false;
     bool skipTranslations = false;
@@ -186,7 +184,7 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    
+
     // We need to catch those errors at the source of the problem
     // https://github.com/AppImage/appimage.github.io/search?q=GLIBC&unscoped_q=GLIBC&type=Issues
     const char *glcv = gnu_get_libc_version ();
@@ -196,7 +194,7 @@ int main(int argc, char **argv)
         qInfo() << "         This mode is unsupported and discouraged.";
         qInfo() << "         For more information, please see";
         qInfo() << "         https://github.com/probonopd/linuxdeployqt/issues/340";
-     } else {
+    } else {
         // openSUSE Leap 15.0 uses glibc 2.26 and is used on OBS
         // Ubuntu Xenial (16.04) uses glibc 2.23
         // Ubuntu Bionic (18.04) uses glibc 2.27
