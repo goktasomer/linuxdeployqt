@@ -14,8 +14,6 @@ execute_process(
     TIMEOUT 10
 )
 
-qt_standard_project_setup()
-
 qt_add_executable(linuxdeployqt
     main.cpp
     excludelist.h
@@ -23,14 +21,4 @@ qt_add_executable(linuxdeployqt
     shared.cpp
 )
 
-qt_generate_deploy_app_script(
-    TARGET linuxdeployqt
-    FILENAME_VARIABLE DEPLOY_SCRIPT
-    NO_UNSUPPORTED_PLATFORM_ERROR
-)
-
 install(TARGETS linuxdeployqt)
-
-if (MACOS OR WIN32)
-    install(SCRIPT ${DEPLOY_SCRIPT})
-endif()
