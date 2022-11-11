@@ -19,14 +19,15 @@ jobs:
 
     - name: Configure the build machine
       run: |
+        echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" >> $GITHUB_ENV
         apt-get update -y
         apt-get install -y desktop-file-utils patchelf
 
     - name: Configure CMake
-      run: cmake -S ${{github.workspace}} -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -S ${{ env.GITHUB_WORKSPACE }} -B ${{ env.GITHUB_WORKSPACE }}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --parallel --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{ env.GITHUB_WORKSPACE }}/build --parallel --config ${{env.BUILD_TYPE}}
 
     - name: Pack an app image
       run: |
@@ -37,14 +38,15 @@ jobs:
         cp -r squashfs-root/usr/lib/appimagekit /usr/local/lib/
         chmod +rx /usr/local/lib/appimagekit
         rm -rf squashfs-root
-        mkdir -p ${{github.workspace}}/linuxdeployqt.AppDir/usr/{bin,lib}
-        cp /usr/bin/{patchelf,desktop-file-validate} /usr/local/bin/{appimagetool,zsyncmake} ${{github.workspace}}/linuxdeployqt.AppDir/usr/bin/
-        cp ${{github.workspace}}/build/linuxdeployqt ${{github.workspace}}/linuxdeployqt.AppDir/usr/bin/
-        cp -r /usr/local/lib/appimagekit ${{github.workspace}}/linuxdeployqt.AppDir/usr/lib/
-        chmod +x ${{github.workspace}}/linuxdeployqt.AppDir/AppRun
+        mkdir -p ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/{bin,lib}
+        cp /usr/bin/{patchelf,desktop-file-validate} /usr/local/bin/{appimagetool,zsyncmake} ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/bin/
+        cp ${{ env.GITHUB_WORKSPACE }}/build/linuxdeployqt ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/bin/
+        cp -r /usr/local/lib/appimagekit ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/lib/
+        chmod +x ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/AppRun
         export VERSION=continuous
         /home/qt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract
-        ./squashfs-root/AppRun ${{github.workspace}}/linuxdeployqt.AppDir/linuxdeployqt.desktop -verbose=3 -appimage -executable=${{github.workspace}}/linuxdeployqt.AppDir/usr/bin/desktop-file-validate
+        ./squashfs-root/AppRun ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/linuxdeployqt.desktop -verbose=3 \
+            -appimage -executable=${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/bin/desktop-file-validate
 
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
