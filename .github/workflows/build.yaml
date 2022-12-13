@@ -19,6 +19,7 @@ jobs:
       run: |
         apt-get update -y
         apt-get install -y libfuse2 fuse desktop-file-utils patchelf libgpgme11-dev
+        modprobe fuse
 
     - name: Configure CMake
       shell: bash
