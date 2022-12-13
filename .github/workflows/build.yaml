@@ -18,8 +18,7 @@ jobs:
       shell: bash
       run: |
         apt-get update -y
-        apt-get install -y libfuse2 fuse desktop-file-utils patchelf libgpgme11-dev
-        modprobe fuse
+        apt-get install -y fuse desktop-file-utils patchelf zsync squashfs-tools
 
     - name: Configure CMake
       shell: bash
