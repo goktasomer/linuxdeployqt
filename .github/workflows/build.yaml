@@ -18,7 +18,7 @@ jobs:
       shell: bash
       run: |
         apt-get update -y
-        apt-get install -y libfuse2 libfuse3-dev fuse3 desktop-file-utils patchelf libgpgme11-dev
+        apt-get install -y libfuse2 fuse desktop-file-utils patchelf libgpgme11-dev
 
     - name: Configure CMake
       shell: bash
