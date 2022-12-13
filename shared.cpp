@@ -1,39 +1,10 @@
-/****************************************************************************
-**
-** Copyright (C) 2016-18 The Qt Company Ltd. and Simon Peter
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the tools applications of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:GPL-EXCEPT$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 3 as published by the Free Software
-** Foundation with exceptions as appearing in the file LICENSE.GPL3-EXCEPT
-** included in the packaging of this file. Please review the following
-** information to ensure the GNU General Public License requirements will
-** be met: https://www.gnu.org/licenses/gpl-3.0.html.
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
-#include <QCoreApplication>
-#include <QString>
-#include <QStringList>
-#include <QDebug>
+#include "shared.h"
+
 #include <iostream>
+
+#include <QCoreApplication>
 #include <QProcess>
 #include <QDir>
-#include <QSet>
-#include <QStack>
 #include <QDirIterator>
 #include <QLibraryInfo>
 #include <QJsonDocument>
@@ -42,15 +13,66 @@
 #include <QJsonValue>
 #include <QRegularExpression>
 #include <QStandardPaths>
-#include "shared.h"
-#include "excludelist.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-#define QSTRING_SPLIT_BEHAVIOR_NAMESPACE QString
+#  define QSTRING_SPLIT_BEHAVIOR_NAMESPACE QString
 #else
-#define QSTRING_SPLIT_BEHAVIOR_NAMESPACE Qt
+#  define QSTRING_SPLIT_BEHAVIOR_NAMESPACE Qt
 #endif
 
+QStringList excludedLibraries {
+    "ld-linux.so.2",
+    "ld-linux-x86-64.so.2",
+    "libanl.so.1",
+    "libasound.so.2",
+    "libBrokenLocale.so.1",
+    "libcidn.so.1",
+    "libcom_err.so.2",
+    "libc.so.6",
+    "libdl.so.2",
+    "libdrm.so.2",
+    "libEGL.so.1",
+    "libexpat.so.1",
+    "libfontconfig.so.1",
+    "libfreetype.so.6",
+    "libfribidi.so.0",
+    "libgbm.so.1",
+    "libgcc_s.so.1",
+    "libglapi.so.0",
+    "libGLdispatch.so.0",
+    "libGL.so.1",
+    "libGLX.so.0",
+    "libgmp.so.10",
+    "libgpg-error.so.0",
+    "libharfbuzz.so.0",
+    "libICE.so.6",
+    "libjack.so.0",
+    "libm.so.6",
+    "libmvec.so.1",
+    "libnss_compat.so.2",
+    "libnss_dns.so.2",
+    "libnss_files.so.2",
+    "libnss_hesiod.so.2",
+    "libnss_nisplus.so.2",
+    "libnss_nis.so.2",
+    "libOpenGL.so.0",
+    "libp11-kit.so.0",
+    "libpthread.so.0",
+    "libresolv.so.2",
+    "librt.so.1",
+    "libSM.so.6",
+    "libstdc++.so.6",
+    "libthai.so.0",
+    "libthread_db.so.1",
+    "libusb-1.0.so.0",
+    "libutil.so.1",
+    "libuuid.so.1",
+    "libX11.so.6",
+    "libxcb-dri2.so.0",
+    "libxcb-dri3.so.0",
+    "libxcb.so.1",
+    "libz.so.1"
+};
 QString appBinaryPath;
 bool runStripEnabled = true;
 bool bundleAllButCoreLibs = false;
@@ -65,7 +87,6 @@ int qtDetected = 0;
 bool qtDetectionComplete = 0; // As long as Qt is not detected yet, ldd may encounter "not found" messages, continue anyway
 bool deployLibrary = false;
 QStringList extraQtPlugins;
-QStringList excludeLibs;
 QStringList ignoreGlob;
 bool copyCopyrightFiles = true;
 QString updateInformation;
@@ -76,10 +97,7 @@ using std::endl;
 
 static QMap<QString,QString> qtToBeBundledInfo;
 
-enum QtModule
-        #if defined(Q_COMPILER_CLASS_ENUM) || defined(Q_CC_MSVC)
-        : quint64
-        #endif
+enum QtModule : quint64
 {
     QtBluetoothModule         = 0x0000000000000001,
     QtCLuceneModule           = 0x0000000000000002,
@@ -274,7 +292,7 @@ bool copyFilePrintStatus(const QString &frm, const QString &trm)
     }
 }
 
-bool copyCopyrightFile(QString libPath){
+bool copyCopyrightFile(QString libPath) {
 
     /* When deploying files (e.g., libraries) from the
      * system, then try to also deploy their copyright file.
@@ -289,14 +307,14 @@ bool copyCopyrightFile(QString libPath){
 
     QString dpkgPath;
     dpkgPath = QStandardPaths::findExecutable("dpkg");
-    if(dpkgPath == ""){
+    if(dpkgPath == "") {
         LogNormal() << "dpkg not found, hence not deploying copyright files";
         return false;
     }
 
     QString dpkgQueryPath;
     dpkgQueryPath = QStandardPaths::findExecutable("dpkg-query");
-    if(dpkgQueryPath == ""){
+    if(dpkgQueryPath == "") {
         LogNormal() << "dpkg-query not found, hence not deploying copyright files";
         return false;
     }
@@ -322,7 +340,7 @@ bool copyCopyrightFile(QString libPath){
     QStringList outputLines = strOut.split("\n", QSTRING_SPLIT_BEHAVIOR_NAMESPACE::SkipEmptyParts);
 
     foreach (QString outputLine, outputLines) {
-        if((outputLine.contains("usr/share/doc")) && (outputLine.contains("/copyright")) && (outputLine.contains(" "))){
+        if((outputLine.contains("usr/share/doc")) && (outputLine.contains("/copyright")) && (outputLine.contains(" "))) {
             // copyrightFilePath = outputLine.split(' ')[1]; // This is not working on multiarch systems; see https://github.com/probonopd/linuxdeployqt/issues/184#issuecomment-345293540
             QStringList parts = outputLine.split(' ');
             copyrightFilePath = parts[parts.size() - 1]; // Grab last element
@@ -339,7 +357,7 @@ bool copyCopyrightFile(QString libPath){
       * this assumption is most likely only true for Debian-like systems */
     QString packageName = copyrightFilePath.split("/")[copyrightFilePath.split("/").length()-2];
     QString copyrightFileTargetPath;
-    if(fhsLikeMode){
+    if(fhsLikeMode) {
         copyrightFileTargetPath = QDir::cleanPath(appBinaryPath + "/../../share/doc/" + packageName + "/copyright");
     } else {
         copyrightFileTargetPath = QDir::cleanPath(appBinaryPath + "/../doc/" + packageName + "/copyright");
@@ -370,7 +388,7 @@ LddInfo findDependencyInfo(const QString &binaryPath)
     QString output = ldd.readAllStandardOutput();
     QStringList outputLines = output.split("\n", QSTRING_SPLIT_BEHAVIOR_NAMESPACE::SkipEmptyParts);
     if (outputLines.size() < 2) {
-        if ((output.contains("statically linked") == false)){
+        if ((output.contains("statically linked") == false)) {
             LogError() << "Could not parse ldd output under 2 lines:" << output;
         }
         return info;
@@ -378,15 +396,15 @@ LddInfo findDependencyInfo(const QString &binaryPath)
 
     foreach (QString outputLine, outputLines) {
 
-        if(outputLine.contains("libQt6")){
+        if(outputLine.contains("libQt6")) {
             qtDetected = 5;
         }
-        if(outputLine.contains("libQtCore.so.4")){
+        if(outputLine.contains("libQtCore.so.4")) {
             qtDetected = 4;
         }
 
         // LogDebug() << "ldd outputLine:" << outputLine;
-        if ((outputLine.contains("not found")) && (qtDetectionComplete == 1)){
+        if ((outputLine.contains("not found")) && (qtDetectionComplete == 1)) {
             LogError() << "ldd outputLine:" << outputLine.replace("\t", "");
             LogError() << "for binary:" << binaryPath;
             LogError() << "Please ensure that all libraries can be found by ldd. Aborting.";
@@ -394,24 +412,12 @@ LddInfo findDependencyInfo(const QString &binaryPath)
         }
     }
 
-    /*
-    FIXME: For unknown reasons, this segfaults; see https://travis-ci.org/probonopd/Labrador/builds/339803886#L1320
-    if (binaryPath.contains("platformthemes")) {
-        LogDebug() << "Not adding dependencies of" << binaryPath << "because we do not bundle dependencies of platformthemes";
-        return info;
-    }
-*/
-
     foreach (const QString &outputLine, outputLines) {
         const QRegularExpressionMatch match = regexp.match(outputLine);
         if (match.hasMatch()) {
             DylibInfo dylib;
             dylib.binaryPath = match.captured(1).trimmed();
             LogDebug() << " dylib.binaryPath" << dylib.binaryPath;
-            /*
-            dylib.compatibilityVersion = 0;
-            dylib.currentVersion = 0;
-            */
             info.dependencies << dylib;
         }
     }
@@ -419,16 +425,15 @@ LddInfo findDependencyInfo(const QString &binaryPath)
     return info;
 }
 
-int containsHowOften(QStringList haystack, QString needle) {
-    int result = haystack.filter(needle).length();
-    return result;
+int containsHowOften(const QStringList& haystack, const QString& needle) {
+    return haystack.filter(needle).length();
 }
 
 LibraryInfo parseLddLibraryLine(const QString &line, const QString &appDirPath, const QSet<QString> &rpaths)
 {
     (void)rpaths;
 
-    if(fhsLikeMode == false){
+    if(fhsLikeMode == false) {
         bundleLibraryDirectory= "lib"; // relative to bundle
     } else {
         QString relativePrefix = fhsPrefix.replace(appDirPath+"/", "");
@@ -447,34 +452,25 @@ LibraryInfo parseLddLibraryLine(const QString &line, const QString &appDirPath, 
     if(!bundleEverything) {
         if(bundleAllButCoreLibs) {
             /*
-        Bundle every lib including the low-level ones except those that are explicitly blacklisted.
-        This is more suitable for bundling in a way that is portable between different distributions and target systems.
-        Along the way, this also takes care of non-Qt libraries.
-
-        The excludelist can be updated by running the bundled script generate-excludelist.sh
-        */
-
-            // copy generated excludelist
-            QStringList excludelist = generatedExcludelist;
-
-            // append exclude libs
-            excludelist += excludeLibs;
-
-            LogDebug() << "excludelist:" << excludelist;
+              Bundle every lib including the low-level ones except those that are explicitly blacklisted.
+              This is more suitable for bundling in a way that is portable between different distributions and target systems.
+              Along the way, this also takes care of non-Qt libraries.
+            */
+            LogDebug() << "Excluded Libraries:" << excludedLibraries;
             if (! trimmed.contains("libicu")) {
-                if (containsHowOften(excludelist, QFileInfo(trimmed).completeBaseName())) {
+                if (containsHowOften(excludedLibraries, QFileInfo(trimmed).completeBaseName())) {
                     LogDebug() << "Skipping blacklisted" << trimmed;
                     return info;
                 }
             }
         } else {
             /*
-        Don't deploy low-level libraries in /usr or /lib because these tend to break if moved to a system with a different glibc.
-        TODO: Could make bundling these low-level libraries optional but then the bundles might need to
-        use something like patchelf --set-interpreter or http://bitwagon.com/rtldi/rtldi.html
-        With the Qt provided by qt.io the libicu libraries come bundled, but that is not the case with e.g.,
-        Qt from ppas. Hence we make sure libicu is always bundled since it cannot be assumed to be on target sytems
-        */
+              Don't deploy low-level libraries in /usr or /lib because these tend to break if moved to a system with a different glibc.
+              TODO: Could make bundling these low-level libraries optional but then the bundles might need to
+              use something like patchelf --set-interpreter or http://bitwagon.com/rtldi/rtldi.html
+              With the Qt provided by qt.io the libicu libraries come bundled, but that is not the case with e.g.,
+              Qt from ppas. Hence we make sure libicu is always bundled since it cannot be assumed to be on target sytems
+            */
             // Manual make of Qt deploys it to /usr/local/Qt-x.x.x so we cannot remove this path just like that, so let's allow known libs of Qt.
             if (!trimmed.contains("libicu") && !trimmed.contains("lib/libQt") && !trimmed.contains("lib/libqgsttools")) {
                 if ((trimmed.startsWith("/usr") or (trimmed.startsWith("/lib")))) {
@@ -609,7 +605,7 @@ QSet<QString> getBinaryRPaths(const QString &path, bool resolve = true, QString 
     objdump.start("objdump", QStringList() << "-x" << path);
 
     if (!objdump.waitForStarted()) {
-        if(objdump.errorString().contains("execvp: No such file or directory")){
+        if(objdump.errorString().contains("execvp: No such file or directory")) {
             LogError() << "Could not start objdump.";
             LogError() << "Make sure it is installed on your $PATH.";
         } else {
@@ -660,7 +656,7 @@ QList<LibraryInfo> getQtLibrariesForPaths(const QStringList &paths, const QStrin
     QSet<QString> existing;
 
     foreach (const QString &path, paths) {
-        if (!excludeLibs.contains(QFileInfo(path).baseName()))
+        if (!excludedLibraries.contains(QFileInfo(path).baseName()))
         {
             foreach (const LibraryInfo &info, getQtLibraries(path, appDirPath, rpaths)) {
                 if (!existing.contains(info.libraryPath)) { // avoid duplicates
@@ -713,14 +709,14 @@ void recursiveCopyAndDeploy(const QString &appDirPath, const QSet<QString> &rpat
         LogDebug() << "copyCopyrightFile:" << fileSourcePath;
         copyCopyrightFile(fileSourcePath);
 
-        if(fileDestinationPath.endsWith(".so")){
+        if(fileDestinationPath.endsWith(".so")) {
 
             LogDebug() << "Deploying .so in QML import" << fileSourcePath;
             runStrip(fileDestinationPath);
 
             // Find out the relative path to the lib/ directory and set it as the rpath
             // FIXME: remove code duplication - the next few lines exist elsewhere already
-            if(fhsLikeMode == false){
+            if(fhsLikeMode == false) {
                 bundleLibraryDirectory= "lib"; // relative to bundle
             } else {
                 QString relativePrefix = fhsPrefix.replace(appDirPath+"/", "");
@@ -778,7 +774,7 @@ QString runPatchelf(QStringList options)
     LogDebug() << "options:" << options;
     patchelftool.start("patchelf", options);
     if (!patchelftool.waitForStarted()) {
-        if(patchelftool.errorString().contains("No such file or directory")){
+        if(patchelftool.errorString().contains("No such file or directory")) {
             LogError() << "Could not start patchelf.";
             LogError() << "Make sure it is installed on your $PATH, e.g., in /usr/local/bin.";
             LogError() << "You can get it from https://nixos.org/patchelf.html.";
@@ -806,12 +802,12 @@ void changeIdentification(const QString &id, const QString &binaryPath)
     LogNormal() << "Checking rpath in" << binaryPath;
     QString oldRpath = runPatchelf(QStringList() << "--print-rpath" << binaryPath).trimmed();
     LogDebug() << "oldRpath:" << oldRpath;
-    if (oldRpath.startsWith("/")){
+    if (oldRpath.startsWith("/")) {
         LogDebug() << "Old rpath in" << binaryPath << "starts with /, hence adding it to LD_LIBRARY_PATH";
         // FIXME: Split along ":" characters, check each one, only append to LD_LIBRARY_PATH if not already there
         QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
         QString oldPath = env.value("LD_LIBRARY_PATH");
-        if (not oldPath.contains(oldRpath)){
+        if (not oldPath.contains(oldRpath)) {
             QString newPath = oldRpath + ":" + oldPath; // FIXME: If we use a ldd replacement, we still need to observe this path
             // FIXME: Directory layout might be different for system Qt; cannot assume lib/ to always be inside the Qt directory
             LogDebug() << "Added to LD_LIBRARY_PATH:" << newPath;
@@ -844,7 +840,7 @@ void changeIdentification(const QString &id, const QString &binaryPath)
         /* https://codereview.qt-project.org/gitweb?p=qt/qttools.git;a=blob_plain;f=src/windeployqt/utils.cpp;h=e89496ea1f371ed86f6937284c1c801daf576572;hb=7be81b804da102b374c2089aac38353a0383c254
          * Search for "qt_prfxpath=<xxx>" in a path, and replace it with "qt_prfxpath=." or "qt_prfxpath=.." */
 
-        if(fhsLikeMode == true){
+        if(fhsLikeMode == true) {
             patchQtCore(binaryPath, "qt_prfxpath", "..");
         } else {
             patchQtCore(binaryPath, "qt_prfxpath", ".");
@@ -868,20 +864,6 @@ void changeIdentification(const QString &id, const QString &binaryPath)
         patchQtCore(binaryPath, "qt_hbinpath", "bin");
         patchQtCore(binaryPath, "qt_hdatpath", ".");
         patchQtCore(binaryPath, "qt_stngpath", "."); // e.g., /opt/qt53/etc/xdg; does it load Trolltech.conf from there?
-
-        /* Qt on Arch Linux comes with more hardcoded paths
-         * https://github.com/probonopd/linuxdeployqt/issues/98
-        patchString(binaryPath, "lib/qt/libexec", "libexec");
-        patchString(binaryPath, "lib/qt/plugins", "plugins");
-        patchString(binaryPath, "lib/qt/imports", "imports");
-        patchString(binaryPath, "lib/qt/qml", "qml");
-        patchString(binaryPath, "lib/qt", "");
-        patchString(binaryPath, "share/doc/qt", "doc");
-        patchString(binaryPath, "include/qt", "include");
-        patchString(binaryPath, "share/qt", "");
-        patchString(binaryPath, "share/qt/translations", "translations");
-        patchString(binaryPath, "share/doc/qt/examples", "examples");
-        */
     }
 
 }
@@ -900,7 +882,7 @@ void runStrip(const QString &binaryPath)
     QProcess patchelfread;
     patchelfread.start("patchelf", QStringList() << "--print-rpath" << resolvedPath);
     if (!patchelfread.waitForStarted()) {
-        if(patchelfread.errorString().contains("execvp: No such file or directory")){
+        if(patchelfread.errorString().contains("execvp: No such file or directory")) {
             LogError() << "Could not start patchelf.";
             LogError() << "Make sure it is installed on your $PATH.";
         } else {
@@ -910,7 +892,7 @@ void runStrip(const QString &binaryPath)
     }
     patchelfread.waitForFinished();
 
-    if (patchelfread.exitCode() != 0){
+    if (patchelfread.exitCode() != 0) {
         LogError() << "Error reading rpath with patchelf" << QFileInfo(resolvedPath).completeBaseName() << ":" << patchelfread.readAllStandardError();
         LogError() << "Error reading rpath with patchelf" << QFileInfo(resolvedPath).completeBaseName() << ":" << patchelfread.readAllStandardOutput();
         exit(1);
@@ -918,7 +900,7 @@ void runStrip(const QString &binaryPath)
 
     QString rpath = patchelfread.readAllStandardOutput();
 
-    if (rpath.startsWith("$") || rpath.trimmed().isEmpty()){
+    if (rpath.startsWith("$") || rpath.trimmed().isEmpty()) {
         LogDebug() << "Already contains rpath starting with $, hence not stripping";
         LogDebug() << patchelfread.readAllStandardOutput();
         return;
@@ -929,7 +911,7 @@ void runStrip(const QString &binaryPath)
     QProcess strip;
     strip.start("strip", QStringList() << resolvedPath);
     if (!strip.waitForStarted()) {
-        if(strip.errorString().contains("execvp: No such file or directory")){
+        if(strip.errorString().contains("execvp: No such file or directory")) {
             LogError() << "Could not start strip.";
             LogError() << "Make sure it is installed on your $PATH.";
         } else {
@@ -1063,7 +1045,7 @@ DeploymentInfo deployQtLibraries(const QString &appDirPath, const QStringList &a
     // Find out whether Qt is a dependency of the application to be bundled
     LddInfo lddInfo = findDependencyInfo(appBinaryPath);
 
-    if(qtDetected != 0){
+    if(qtDetected != 0) {
 
         // Determine the location of the Qt to be bundled
         LogDebug() << "Using qmake to determine the location of the Qt to be bundled";
@@ -1081,21 +1063,21 @@ DeploymentInfo deployQtLibraries(const QString &appDirPath, const QStringList &a
             // openSUSE has qmake for Qt 4 and qmake-qt5 for Qt 5
             // Qt 4 on Fedora comes with suffix -qt4
             // http://www.geopsy.org/wiki/index.php/Installing_Qt_binary_packages
-            if(qtDetected == 5){
+            if(qtDetected == 5) {
                 qmakePath = QStandardPaths::findExecutable("qmake-qt6");
                 LogDebug() << "qmake 5";
-            } else if(qtDetected == 4){
+            } else if(qtDetected == 4) {
                 qmakePath = QStandardPaths::findExecutable("qmake-qt4");
                 LogDebug() << "qmake 4";
             }
 
-            if(qmakePath.isEmpty()){
+            if(qmakePath.isEmpty()) {
                 // The upstream name of the binary is "qmake", for Qt 4 and Qt 5
                 qmakePath = QStandardPaths::findExecutable("qmake");
             }
         }
 
-        if(qmakePath.isEmpty()){
+        if(qmakePath.isEmpty()) {
             LogError() << "qmake not found on the $PATH";
             exit(1);
         }
@@ -1136,7 +1118,7 @@ DeploymentInfo deployQtLibraries(const QString &appDirPath, const QStringList &a
     qtDetectionComplete = 1;
 
     QString libraryPath;
-    if(fhsLikeMode == false){
+    if(fhsLikeMode == false) {
         libraryPath = QFileInfo(applicationBundle.binaryPath).dir().filePath("lib/" + bundleLibraryDirectory);
     } else {
         libraryPath = QFileInfo(applicationBundle.binaryPath).dir().filePath("../lib/" + bundleLibraryDirectory);
@@ -1334,7 +1316,7 @@ void deployPlugins(const AppDirInfo &appDirInfo, const QString &pluginSourcePath
         QString dstLibexec;
         QString dstResources;
         QString dstTranslations;
-        if(fhsLikeMode){
+        if(fhsLikeMode) {
             QFileInfo qfi(appDirInfo.binaryPath);
             QString qtTargetDir = qfi.absoluteDir().absolutePath() + "/../";
             dstLibexec = qtTargetDir + "/libexec";
@@ -1411,7 +1393,7 @@ void deployPlugins(const AppDirInfo &appDirInfo, const QString &pluginSourcePath
     foreach (const QString &plugin, pluginList) {
         sourcePath = pluginSourcePath + "/" + plugin;
         destinationPath = pluginDestinationPath + "/" + plugin;
-        if(!excludeLibs.contains(QFileInfo(sourcePath).baseName()))
+        if(!excludedLibraries.contains(QFileInfo(sourcePath).baseName()))
         {
             QDir dir;
             dir.mkpath(QFileInfo(destinationPath).path());
@@ -1436,28 +1418,8 @@ void deployPlugins(const AppDirInfo &appDirInfo, const QString &pluginSourcePath
 
 void createQtConf(const QString &appDirPath)
 {
-    // Set Plugins and imports paths. These are relative to QCoreApplication::applicationDirPath()
-    // which is where the main executable resides; see http://doc.qt.io/qt-5/qt-conf.html
-    // See https://github.com/probonopd/linuxdeployqt/issues/ 75, 98, 99
-    QByteArray contents;
-    if(fhsLikeMode){
-        contents = "# Generated by linuxdeployqt\n"
-                   "# https://github.com/probonopd/linuxdeployqt/\n"
-                   "[Paths]\n"
-                   "Prefix = ../\n"
-                   "Plugins = plugins\n"
-                   "Imports = qml\n"
-                   "Qml2Imports = qml\n";
-    } else {
-        contents = "# Generated by linuxdeployqt\n"
-                   "# https://github.com/probonopd/linuxdeployqt/\n"
-                   "[Paths]\n"
-                   "Prefix = ./\n"
-                   "Plugins = plugins\n"
-                   "Imports = qml\n"
-                   "Qml2Imports = qml\n";
-    }
-
+    // See, https://doc.qt.io/qt-6/qt-conf.html#overriding-paths
+    QByteArray contents = fhsLikeMode ? "[Paths]\nPrefix = ../" : "[Paths]\nPrefix = ./";
     QString filePath = appDirPath + "/"; // Is picked up when placed next to the main executable
     QString fileName = QDir::cleanPath(appBinaryPath + "/../qt.conf");
 
@@ -1478,9 +1440,7 @@ void createQtConf(const QString &appDirPath)
 
 void createQtConfForQtWebEngineProcess(const QString &appDirPath)
 {
-    QByteArray contents = "# Generated by linuxdeployqt\n"
-                          "# https://github.com/probonopd/linuxdeployqt/\n"
-                          "[Paths]\n"
+    QByteArray contents = "[Paths]\n"
                           "Prefix = ../\n";
     QString filePath = appDirPath + "/";
     QString fileName = filePath + "qt.conf";
@@ -1507,7 +1467,7 @@ void deployPlugins(const QString &appDirPath, DeploymentInfo deploymentInfo)
     applicationBundle.binaryPath = appBinaryPath;
 
     QString pluginDestinationPath;
-    if(fhsLikeMode){
+    if(fhsLikeMode) {
         QFileInfo qfi(applicationBundle.binaryPath);
         QString qtTargetDir = qfi.absoluteDir().absolutePath() + "/../";
         pluginDestinationPath = qtTargetDir + "/plugins";
@@ -1524,7 +1484,7 @@ void deployQmlImport(const QString &appDirPath, const QSet<QString> &rpaths, con
     applicationBundle.binaryPath = appBinaryPath;
 
     QString importDestinationPath;
-    if(fhsLikeMode){
+    if(fhsLikeMode) {
         QFileInfo qfi(applicationBundle.binaryPath);
         QString qtTargetDir = qfi.absoluteDir().absolutePath() + "/../";
         importDestinationPath = qtTargetDir + "/qml/" + importName;
@@ -1550,7 +1510,7 @@ void deployQmlImport(const QString &appDirPath, const QSet<QString> &rpaths, con
 // Scan qml files in qmldirs for import statements, deploy used imports from Qml2ImportsPath to ./qml.
 bool deployQmlImports(const QString &appDirPath, DeploymentInfo deploymentInfo, QStringList &qmlDirs, QStringList &qmlImportPaths)
 {
-    if(!qtDetected){
+    if(!qtDetected) {
         LogDebug() << "Skipping QML imports since no Qt detected";
         return false;
     }
@@ -1565,7 +1525,7 @@ bool deployQmlImports(const QString &appDirPath, DeploymentInfo deploymentInfo, 
     LogDebug() << "Looking for qmlimportscanner at" << qmlImportScannerPath;
 
     // Fallback: Look relative to the linuxdeployqt binary
-    if (!QFile(qmlImportScannerPath).exists()){
+    if (!QFile(qmlImportScannerPath).exists()) {
         qmlImportScannerPath = QCoreApplication::applicationDirPath() + "/qmlimportscanner";
         LogDebug() << "Fallback, looking for qmlimportscanner at" << qmlImportScannerPath;
     }
@@ -1717,7 +1677,7 @@ void changeQtLibraries(const QString appPath, const QString &qtPath)
 
 bool checkAppImagePrerequisites(const QString &appDirPath)
 {
-    if(fhsLikeMode == true){
+    if(fhsLikeMode == true) {
         /* In FHS-like mode, we assume that there will be a desktop file
          * and icon file that appimagetool will be able to pick up */
         return true;
@@ -1878,7 +1838,7 @@ bool deployTranslations(const QString &sourcePath, const QString &target, quint6
     LogDebug() << "Looking for lconvert at" << lconvertPath;
 
     // Fallback: Look relative to the linuxdeployqt binary
-    if (!QFile(lconvertPath).exists()){
+    if (!QFile(lconvertPath).exists()) {
         lconvertPath = QCoreApplication::applicationDirPath() + "/lconvert";
         LogDebug() << "Fallback, looking for lconvert at" << lconvertPath;
     }

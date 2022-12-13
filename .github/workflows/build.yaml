@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [ "master" ]
 
-env:
-  BUILD_TYPE: Release
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -20,37 +17,16 @@ jobs:
     - name: Configure the build machine
       shell: bash
       run: |
-        echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" >> $GITHUB_ENV
         apt-get update -y
-        apt-get install -y desktop-file-utils patchelf libgpgme11-dev
+        apt-get install -y libfuse2 libfuse3-dev fuse3 desktop-file-utils patchelf libgpgme11-dev
 
     - name: Configure CMake
       shell: bash
-      run: cmake -S ${{ env.GITHUB_WORKSPACE }} -B ${{ env.GITHUB_WORKSPACE }}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -S . -B ../build
 
     - name: Build
       shell: bash
-      run: cmake --build ${{ env.GITHUB_WORKSPACE }}/build --parallel --config ${{env.BUILD_TYPE}}
-
-    - name: Pack an app image
-      shell: bash
-      run: |
-        wget "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-        chmod +x appimagetool-x86_64.AppImage
-        ./appimagetool-x86_64.AppImage --appimage-extract
-        cp squashfs-root/usr/bin/* /usr/local/bin/
-        cp -r squashfs-root/usr/lib/appimagekit /usr/local/lib/
-        chmod +rx /usr/local/lib/appimagekit
-        rm -rf squashfs-root
-        mkdir -p ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/{bin,lib}
-        cp /usr/bin/{patchelf,desktop-file-validate} /usr/local/bin/{appimagetool,zsyncmake} ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/bin/
-        cp ${{ env.GITHUB_WORKSPACE }}/build/linuxdeployqt ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/bin/
-        cp -r /usr/local/lib/appimagekit ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/lib/
-        chmod +x ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/AppRun
-        export VERSION=continuous
-        /home/qt/linuxdeployqt-continuous-x86_64.AppImage --appimage-extract
-        ./squashfs-root/AppRun ${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/linuxdeployqt.desktop -verbose=3 \
-            -appimage -executable=${{ env.GITHUB_WORKSPACE }}/linuxdeployqt.AppDir/usr/bin/desktop-file-validate
+      run: cmake --build ../build --parallel
 
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
