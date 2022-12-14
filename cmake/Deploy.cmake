@@ -41,8 +41,7 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
         )
         add_custom_command(TARGET deploy VERBATIM
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                squashfs_root/usr/bin/appimagetool ${APPIMAGETOOL_EXECUTABLE}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/AppRun ${APPIMAGETOOL_EXECUTABLE}
         )
     endif()
 
