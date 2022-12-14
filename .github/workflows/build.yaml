@@ -14,19 +14,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Configure the build machine
+    - name: Install required packages
       shell: bash
       run: |
         apt-get update -y
-        apt-get install -y sudo fuse desktop-file-utils patchelf zsync squashfs-tools
-        sudo modprobe fuse
+        apt-get install -y patchelf
 
-    - name: Configure CMake
-      shell: bash
+    - name: Configure the project
       run: cmake -S . -B ../build
 
-    - name: Build
-      shell: bash
+    - name: Build the project
       run: cmake --build ../build --parallel
 
     - uses: "marvinpinto/action-automatic-releases@latest"

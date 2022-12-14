@@ -332,8 +332,9 @@ int main(int argc, char **argv)
     if(appRun.exists()) {
         qDebug() << "Keeping existing AppRun";
     } else {
-        if (!QFile::link(relativeBinPath, appDirPath + "/AppRun")) {
-            LogError() << "Could not create AppRun link";
+        if (!QFile::copy(QCoreApplication::applicationDirPath() + "/../../AppRun",
+                         appDirPath + "/AppRun")) {
+            LogError() << "Could not copy AppRun";
         }
     }
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 
 project(linuxdeployqt
     LANGUAGES CXX
-    VERSION 2.1.0
+    VERSION 2.1.1
     HOMEPAGE_URL omergoktas.com
     DESCRIPTION "A useful tool to easily build AppImages out of Qt projects on Linux."
 )
