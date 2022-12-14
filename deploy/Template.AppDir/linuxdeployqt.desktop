@@ -3,6 +3,6 @@ Type=Application
 Name=linuxdeployqt
 Exec=linuxdeployqt
 Icon=linuxdeployqt
-Comment=Bundle an application as an AppDir and/or AppImage
+Comment=Qt dependency deployment tool for Linux.
 Terminal=true
 Categories=Development;

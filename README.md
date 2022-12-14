@@ -1,16 +1,45 @@
 # linuxdeployqt for Qt 6
 
-The **linuxdeployqt** tool, _adapted_ for **Qt 6**. A useful tool to easily build AppImages out of Qt projects. Contains a few minor fixes on top of the upstream project.
+This tool simplifies the deployment of dependencies for Linux applications and enables you to build [AppImages](https://appimage.org) for your app.
 
-> Based on [the macdeployqt](https://github.com/qt/qtbase/tree/dev/src/tools/macdeployqt) project and adapted the [code here](https://github.com/probonopd/linuxdeployqt) (_thanks to [The Qt Company](https://qt.io) and [@probonopd](https://github.com/probonopd)_)
+> Provides bug fixes and improvements on top of [qt/macdeployqt](https://github.com/qt/qtbase/tree/dev/src/tools/macdeployqt) and [probonopd/linuxdeployqt](https://github.com/probonopd/linuxdeployqt).
 
 ## Download
+You can download the latest pre-built binary from [**here**](https://github.com/omergoktas/linuxdeployqt/releases/download/latest/linuxdeployqt-x86_64.AppImage), or you can build your own from the source code using the instructions below:
 
-Download the latest prebuilt binary from [here](https://github.com/omergoktas/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage)
+```bash
+# CMAKE_PREFIX_PATH should point to your Qt installation
+git clone https://github.com/omergoktas/linuxdeployqt
+cmake -S linuxdeployqt -B build -DCMAKE_PREFIX_PATH=/path/to/qt/6.5.0/gcc_64
+cmake --build build --parallel
+```
 
-## How to use
+## Usage
 
-The following command prints the basic usage information. Also detailed usage information can be found on the upstream project's GitHub [page](https://github.com/probonopd/linuxdeployqt). Be aware that there are undocumented features (i.e., [see](https://github.com/probonopd/linuxdeployqt/issues/340#issuecomment-452025959)).
+A few examples demonstrating different use cases:
+
+```bash
+# Either put location of your Qt installation into PATH variable, i.e.:
+#     export QT_PATH=/path/to/qt/6.5.0/gcc_64
+#     export PATH=$PATH:$QT_PATH/bin:$QT_PATH/lib
+# Or use the -qmake option as shown below:
+
+export QMAKE=/path/to/qt/6.5.0/gcc_64/bin/qmake
+
+# 1. Deploy Qt dependencies only (minimal)
+./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE
+
+# 2. Deploy everything except essential system libraries (that come with all Linux distributions out of the box).
+./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE -bundle-non-qt-libs
+
+# 3. Deploy everything except essential system libraries and build an AppImage.
+./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE -appimage
+
+# 4. Deploy everything (including essential system libraries)
+./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE -bundle-everything
+```
+
+## Advanced usage
 
 ```
 Usage: linuxdeployqt <app-binary|desktop file> [options]
@@ -51,28 +80,3 @@ to be used instead.
 
 Plugins related to a Qt library are copied in with the library.
 ```
-
-### Example usage:
-
-Don't forget to modify the code below according to your project's needs before executing.
-
-```bash
-# Set PATH variable to the location where the Qt is installed
-export QT_PATH=/path/to/Qt/6.4.0/gcc_64
-export PATH=$PATH:$QT_PATH/bin:$QT_PATH/lib
-
-# Build and install your project
-cmake -S yourproject/ -B build/
-cmake --build build/ --parallel
-cmake --install build/ --prefix install
-
-# Deploy ALL dependencies (assuming the executable installed to install/bin/app in previous step)
-./linuxdeployqt-continuous-x86_64.AppImage install/bin/app -bundle-everything
-    
-# Alternatively, you can choose to deploy only a minimal set of dependencies
-./linuxdeployqt-continuous-x86_64.AppImage install/bin/app
-```
-
-## How to build
-
-You can use the same method described in the previous step to also build this project. Alternatively you can take a look at the CI build script [here](https://github.com/omergoktas/linuxdeployqt/blob/master/.github/workflows/build.yaml). The same script can also be seen to understand how to build an AppImage.

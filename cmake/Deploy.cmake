@@ -37,43 +37,43 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
         add_custom_command(TARGET deploy VERBATIM
-            COMMAND ${CMAKE_COMMAND} -E rm -rf ${APPIMAGETOOL_EXECUTABLE}
+            COMMAND ${CMAKE_COMMAND} -E rm -f ${APPIMAGETOOL_EXECUTABLE}
         )
         add_custom_command(TARGET deploy VERBATIM
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/AppRun ${APPIMAGETOOL_EXECUTABLE}
+            ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/AppRun ${APPIMAGETOOL_EXECUTABLE}
         )
     endif()
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E make_directory
-            ${DEPLOY_PREFIX_PATH}/bin
-            ${DEPLOY_PREFIX_PATH}/lib
+        ${DEPLOY_PREFIX_PATH}/bin
+        ${DEPLOY_PREFIX_PATH}/lib
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/bin ${DEPLOY_PREFIX_PATH}/bin
+        ${DEPLOY_SOURCE_DIR}/Template.AppDir ${DEPLOY_APPDIR_PATH}
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/lib ${DEPLOY_PREFIX_PATH}/lib
+        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/bin ${DEPLOY_PREFIX_PATH}/bin
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${DEPLOY_SOURCE_DIR}/Template.AppDir ${DEPLOY_APPDIR_PATH}
+        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/lib ${DEPLOY_PREFIX_PATH}/lib
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/AppRun ${DEPLOY_APPDIR_PATH}
+        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/AppRun ${DEPLOY_APPDIR_PATH}
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            /usr/bin/patchelf $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/bin
+        /usr/bin/patchelf $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/bin
     )
 
     add_custom_command(TARGET deploy VERBATIM
@@ -82,9 +82,9 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${LINUXDEPLOYQT_EXECUTABLE}
-            ${DEPLOY_PREFIX_PATH}/bin/$<TARGET_FILE_NAME:${TARGET}>
-            -appimage
-            -qmake="${QMAKE_EXECUTABLE}"
+        ${DEPLOY_PREFIX_PATH}/bin/$<TARGET_FILE_NAME:${TARGET}>
+        -appimage
+        -qmake="${QMAKE_EXECUTABLE}"
         WORKING_DIRECTORY ${APP_DEPLOY_DIR}
     )
 endfunction()
