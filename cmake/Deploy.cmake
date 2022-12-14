@@ -32,17 +32,21 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
         set(APPIMAGETOOL_URL "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage")
         file(DOWNLOAD ${APPIMAGETOOL_URL} ${APPIMAGETOOL_EXECUTABLE} SHOW_PROGRESS)
         file(CHMOD ${APPIMAGETOOL_EXECUTABLE} PERMISSIONS OWNER_READ OWNER_EXECUTE)
+        add_custom_command(TARGET deploy VERBATIM
+            COMMAND ${APPIMAGETOOL_EXECUTABLE} --appimage-extract
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        add_custom_command(TARGET deploy VERBATIM COMMAND rm -rf ${APPIMAGETOOL_EXECUTABLE})
+        add_custom_command(TARGET deploy VERBATIM
+            COMMAND create_symlink squashfs_root/usr/bin/appimagetool ${APPIMAGETOOL_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
     endif()
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E make_directory
             ${DEPLOY_PREFIX_PATH}/bin
             ${DEPLOY_PREFIX_PATH}/lib
-    )
-
-    add_custom_command(TARGET deploy VERBATIM
-        COMMAND ${APPIMAGETOOL_EXECUTABLE} --appimage-extract
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 
     add_custom_command(TARGET deploy VERBATIM

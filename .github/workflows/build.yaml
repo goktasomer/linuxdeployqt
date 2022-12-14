@@ -21,15 +21,13 @@ jobs:
         apt-get install -y patchelf
 
     - name: Configure the project
-      run: cmake -S . -B ../build
+      run: cmake -S . -B build
 
     - name: Build the project
-      run: cmake --build ../build --parallel
+      run: cmake --build build --parallel
 
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "continuous"
-        title: "latest"
         prerelease: false
-        files: linuxdeployqt-continuous-x86_64.AppImage
+        files: build/deploy/linuxdeployqt-x86_64.AppImage
