@@ -36,9 +36,12 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
             COMMAND ${APPIMAGETOOL_EXECUTABLE} --appimage-extract
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
-        add_custom_command(TARGET deploy VERBATIM COMMAND rm -rf ${APPIMAGETOOL_EXECUTABLE})
         add_custom_command(TARGET deploy VERBATIM
-            COMMAND create_symlink squashfs_root/usr/bin/appimagetool ${APPIMAGETOOL_EXECUTABLE}
+            COMMAND ${CMAKE_COMMAND} -E rm -rf ${APPIMAGETOOL_EXECUTABLE}
+        )
+        add_custom_command(TARGET deploy VERBATIM
+            COMMAND ${CMAKE_COMMAND} -E create_symlink
+                squashfs_root/usr/bin/appimagetool ${APPIMAGETOOL_EXECUTABLE}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
     endif()
