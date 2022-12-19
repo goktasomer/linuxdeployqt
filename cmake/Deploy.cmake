@@ -77,10 +77,6 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
     )
 
     add_custom_command(TARGET deploy VERBATIM
-        COMMAND ${CMAKE_COMMAND} -E rm -f ${DEPLOY_PREFIX_PATH}/bin/AppRun
-    )
-
-    add_custom_command(TARGET deploy VERBATIM
         COMMAND ${LINUXDEPLOYQT_EXECUTABLE}
         ${DEPLOY_PREFIX_PATH}/bin/$<TARGET_FILE_NAME:${TARGET}>
         -appimage
