@@ -38,6 +38,25 @@ export QMAKE=/path/to/qt/6.5.0/gcc_64/bin/qmake
 # 4. Deploy everything (including essential system libraries)
 ./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE -bundle-everything
 ```
+## Calling external software from within an app image
+
+Authors of an app-imaged software should know that we [modify](https://github.com/omergoktas/linuxdeployqt/blob/master/deploy/Template.AppDir/AppRun) system environment variables to establish a sandbox before calling the app-imaged software. This way the app-imaged software prefers the libraries shipped with the app image over the libraries installed on the end user's system when loading its dependencies. On the other hand, these changes could cause conflicting libraries when calling external software from within the app image. Therefore it is important that the calling software restore the system environment before executing external software via QProcess, etc. All modified environment variables available through a `SYS_<modified_var>`-prefixed name, i.e. `SYS_PATH` for `PATH`. Check out the example code below:
+
+```cpp
+auto env = QProcessEnvironment::systemEnvironment();
+env.insert("PATH", env.value("SYS_PATH"));
+env.insert("LD_LIBRARY_PATH", env.value("SYS_LD_LIBRARY_PATH"));
+env.insert("PYTHONPATH", env.value("SYS_PYTHONPATH"));
+env.insert("XDG_DATA_DIRS", env.value("SYS_XDG_DATA_DIRS"));
+env.insert("PERLLIB", env.value("SYS_PERLLIB"));
+env.insert("GSETTINGS_SCHEMA_DIR", env.value("SYS_GSETTINGS_SCHEMA_DIR"));
+env.insert("QT_PLUGIN_PATH", env.value("SYS_QT_PLUGIN_PATH"));
+
+QProcess process;
+process.setProcessEnvironment(env);
+process.start("external_app", arguments);
+process.waitForFinished();
+```
 
 ## Advanced usage
 

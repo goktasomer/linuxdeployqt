@@ -277,14 +277,6 @@ int main(int argc, char **argv)
         }
     }
 
-    // Allow binaries next to linuxdeployqt to be found; this is useful for bundling
-    // this application itself together with helper binaries such as patchelf
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    QString oldPath = env.value("PATH");
-    QString newPath = QCoreApplication::applicationDirPath() + ":" + oldPath;
-    LogDebug() << newPath;
-    setenv("PATH",newPath.toUtf8().constData(),1);
-
     QString appName = QDir::cleanPath(QFileInfo(appBinaryPath).fileName());
 
     QString appDir = QDir::cleanPath(appBinaryPath + "/../");

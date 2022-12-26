@@ -68,12 +68,11 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/AppRun ${DEPLOY_APPDIR_PATH}
+        /usr/bin/patchelf $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/bin
     )
 
     add_custom_command(TARGET deploy VERBATIM
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        /usr/bin/patchelf $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/bin
+        COMMAND ${CMAKE_COMMAND} -E rm -f ${DEPLOY_PREFIX_PATH}/bin/AppRun
     )
 
     add_custom_command(TARGET deploy VERBATIM

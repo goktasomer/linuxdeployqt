@@ -210,6 +210,24 @@ static QtModuleEntry qtModuleEntries[] = {
     { QtSerialBusModule, "serialbus", "Qt6SerialBus", 0 }
 };
 
+QProcessEnvironment systemEnvironment()
+{
+    static QProcessEnvironment env = [] {
+        auto env = QProcessEnvironment::systemEnvironment();
+        env.insert("PATH", env.value("SYS_PATH"));
+        env.insert("LD_LIBRARY_PATH", env.value("SYS_LD_LIBRARY_PATH"));
+        env.insert("PYTHONPATH", env.value("SYS_PYTHONPATH"));
+        env.insert("XDG_DATA_DIRS", env.value("SYS_XDG_DATA_DIRS"));
+        env.insert("PERLLIB", env.value("SYS_PERLLIB"));
+        env.insert("GSETTINGS_SCHEMA_DIR", env.value("SYS_GSETTINGS_SCHEMA_DIR"));
+        env.insert("QT_PLUGIN_PATH", env.value("SYS_QT_PLUGIN_PATH"));
+        return env;
+    } ();
+    return env;
+}
+
+static QProcessEnvironment lddEnvironment(systemEnvironment());
+
 bool operator==(const LibraryInfo &a, const LibraryInfo &b)
 {
     return ((a.libraryPath == b.libraryPath) && (a.binaryPath == b.binaryPath));
@@ -325,17 +343,18 @@ bool copyCopyrightFile(QString libPath) {
 
     QStringList arguments;
     arguments << "-S" << libPath;
-    QProcess *myProcess = new QProcess();
-    myProcess->start(dpkgPath, arguments);
-    myProcess->waitForFinished();
-    QString strOut = myProcess->readAllStandardOutput().split(':')[0];
+    QProcess myProcess;
+    myProcess.setProcessEnvironment(systemEnvironment());
+    myProcess.start(dpkgPath, arguments);
+    myProcess.waitForFinished();
+    QString strOut = myProcess.readAllStandardOutput().split(':')[0];
     if(strOut == "") return false;
 
     /* Find out the copyright file in that package */
     arguments << "-L" << strOut;
-    myProcess->start(dpkgQueryPath, arguments);
-    myProcess->waitForFinished();
-    strOut = myProcess->readAllStandardOutput();
+    myProcess.start(dpkgQueryPath, arguments);
+    myProcess.waitForFinished();
+    strOut = myProcess.readAllStandardOutput();
 
     QStringList outputLines = strOut.split("\n", QSTRING_SPLIT_BEHAVIOR_NAMESPACE::SkipEmptyParts);
 
@@ -375,6 +394,7 @@ LddInfo findDependencyInfo(const QString &binaryPath)
     LogDebug() << "Using ldd:";
     LogDebug() << " inspecting" << binaryPath;
     QProcess ldd;
+    ldd.setProcessEnvironment(lddEnvironment);
     ldd.start("ldd", QStringList() << binaryPath);
     ldd.waitForFinished();
 
@@ -602,6 +622,7 @@ QSet<QString> getBinaryRPaths(const QString &path, bool resolve = true, QString 
     QSet<QString> rpaths;
 
     QProcess objdump;
+    objdump.setProcessEnvironment(systemEnvironment());
     objdump.start("objdump", QStringList() << "-x" << path);
 
     if (!objdump.waitForStarted()) {
@@ -774,20 +795,12 @@ QString runPatchelf(QStringList options)
     LogDebug() << "options:" << options;
     patchelftool.start("patchelf", options);
     if (!patchelftool.waitForStarted()) {
-        if(patchelftool.errorString().contains("No such file or directory")) {
-            LogError() << "Could not start patchelf.";
-            LogError() << "Make sure it is installed on your $PATH, e.g., in /usr/local/bin.";
-            LogError() << "You can get it from https://nixos.org/patchelf.html.";
-        } else {
-            LogError() << "Could not start patchelf tool. Process error is" << patchelftool.errorString();
-        }
+        LogError() << "Could not start patchelf tool. Process error is" << patchelftool.errorString();
         exit(1);
     }
     patchelftool.waitForFinished();
     if (patchelftool.exitCode() != 0) {
         LogError() << "runPatchelf:" << patchelftool.readAllStandardError();
-        // LogError() << "runPatchelf:" << patchelftool.readAllStandardOutput();
-        // exit(1); // Do not exit because this could be a script that patchelf can't work on
     }
     return(patchelftool.readAllStandardOutput().trimmed());
 }
@@ -805,13 +818,12 @@ void changeIdentification(const QString &id, const QString &binaryPath)
     if (oldRpath.startsWith("/")) {
         LogDebug() << "Old rpath in" << binaryPath << "starts with /, hence adding it to LD_LIBRARY_PATH";
         // FIXME: Split along ":" characters, check each one, only append to LD_LIBRARY_PATH if not already there
-        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-        QString oldPath = env.value("LD_LIBRARY_PATH");
+        QString oldPath = lddEnvironment.value("LD_LIBRARY_PATH");
         if (not oldPath.contains(oldRpath)) {
             QString newPath = oldRpath + ":" + oldPath; // FIXME: If we use a ldd replacement, we still need to observe this path
             // FIXME: Directory layout might be different for system Qt; cannot assume lib/ to always be inside the Qt directory
             LogDebug() << "Added to LD_LIBRARY_PATH:" << newPath;
-            setenv("LD_LIBRARY_PATH",newPath.toUtf8().constData(),1);
+            lddEnvironment.insert("LD_LIBRARY_PATH", newPath);
         }
     }
 
@@ -882,12 +894,7 @@ void runStrip(const QString &binaryPath)
     QProcess patchelfread;
     patchelfread.start("patchelf", QStringList() << "--print-rpath" << resolvedPath);
     if (!patchelfread.waitForStarted()) {
-        if(patchelfread.errorString().contains("execvp: No such file or directory")) {
-            LogError() << "Could not start patchelf.";
-            LogError() << "Make sure it is installed on your $PATH.";
-        } else {
-            LogError() << "Could not start patchelf. Process error is" << patchelfread.errorString();
-        }
+        LogError() << "Could not start patchelf. Process error is" << patchelfread.errorString();
         // exit(1); // Do not exit because this could be a script that patchelf can't work on
     }
     patchelfread.waitForFinished();
@@ -909,6 +916,7 @@ void runStrip(const QString &binaryPath)
     LogDebug() << "Using strip:";
     LogDebug() << " stripping" << resolvedPath;
     QProcess strip;
+    strip.setProcessEnvironment(systemEnvironment());
     strip.start("strip", QStringList() << resolvedPath);
     if (!strip.waitForStarted()) {
         if(strip.errorString().contains("execvp: No such file or directory")) {
@@ -1014,9 +1022,10 @@ DeploymentInfo deployQtLibraries(QList<LibraryInfo> libraries,
     return deploymentInfo;
 }
 
-static QString captureOutput(const QString &command)
+static QString runQmake(const QString &command)
 {
     QProcess process;
+    process.setProcessEnvironment(systemEnvironment());
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     process.start(command, QIODevice::ReadOnly);
 #else
@@ -1083,7 +1092,7 @@ DeploymentInfo deployQtLibraries(const QString &appDirPath, const QStringList &a
         }
 
         LogNormal() << "Using qmake: " << qmakePath;
-        QString output = captureOutput(qmakePath + " -query");
+        QString output = runQmake(qmakePath + " -query");
         LogDebug() << "-query output from qmake:" << output;
 
         QStringList outputLines = output.split("\n", QSTRING_SPLIT_BEHAVIOR_NAMESPACE::SkipEmptyParts);
@@ -1105,12 +1114,11 @@ DeploymentInfo deployQtLibraries(const QString &appDirPath, const QStringList &a
             exit(1);
         } else {
             LogDebug() << "Qt libs path determined from qmake:" << qtLibsPath;
-            QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-            QString oldPath = env.value("LD_LIBRARY_PATH");
+            QString oldPath = lddEnvironment.value("LD_LIBRARY_PATH");
             QString newPath = qtLibsPath + ":" + oldPath; // FIXME: If we use a ldd replacement, we still need to observe this path
             // FIXME: Directory layout might be different for system Qt; cannot assume lib/ to always be inside the Qt directory
             LogDebug() << "Changed LD_LIBRARY_PATH:" << newPath;
-            setenv("LD_LIBRARY_PATH",newPath.toUtf8().constData(),1);
+            lddEnvironment.insert("LD_LIBRARY_PATH", newPath);
         }
     }
 
@@ -1127,11 +1135,10 @@ DeploymentInfo deployQtLibraries(const QString &appDirPath, const QStringList &a
     /* Make ldd detect pre-existing libraries in the AppDir.
     * TODO: Consider searching the AppDir for .so* files outside of libraryPath
     * and warning about them not being taken into consideration */
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    QString oldPath = env.value("LD_LIBRARY_PATH");
+    QString oldPath = lddEnvironment.value("LD_LIBRARY_PATH");
     QString newPath = libraryPath + ":" + oldPath; // FIXME: If we use a ldd replacement, we still need to observe this path
     LogDebug() << "Changed LD_LIBRARY_PATH:" << newPath;
-    setenv("LD_LIBRARY_PATH",newPath.toUtf8().constData(),1);
+    lddEnvironment.insert("LD_LIBRARY_PATH", newPath);
 
     applicationBundle.libraryPaths = findAppLibraries(appDirPath);
     LogDebug() << "applicationBundle.libraryPaths:" << applicationBundle.libraryPaths;
@@ -1557,6 +1564,7 @@ bool deployQmlImports(const QString &appDirPath, DeploymentInfo deploymentInfo, 
 
     // run qmlimportscanner
     QProcess qmlImportScanner;
+    qmlImportScanner.setProcessEnvironment(systemEnvironment());
     LogDebug() << qmlImportScannerPath << argumentList;
     qmlImportScanner.start(qmlImportScannerPath, argumentList);
     if (!qmlImportScanner.waitForStarted()) {
@@ -1726,7 +1734,7 @@ int createAppImage(const QString &appDirPath)
         updateInfoArgument = QString("-u '%1'").arg(updateInformation);
     }
 
-    QString appImageCommand = "appimagetool -v '" + appDirPath + "' -n " + updateInfoArgument; // +"' '" + appImagePath + "'";
+    QString appImageCommand = "appimagetool -v '" + appDirPath + "' -n " + updateInfoArgument;
     LogNormal() << appImageCommand;
     int ret = system(appImageCommand.toUtf8().constData());
     LogNormal() << "ret" << ret;
@@ -1866,6 +1874,7 @@ bool deployTranslations(const QString &sourcePath, const QString &target, quint6
         LogDebug() << "lconvert arguments:" << arguments;
 
         QProcess lconvert;
+        lconvert.setProcessEnvironment(systemEnvironment());
         lconvert.start(lconvertPath, arguments);
         lconvert.waitForFinished();
 
