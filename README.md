@@ -27,16 +27,16 @@ A few examples demonstrating different use cases:
 export QMAKE=/path/to/qt/6.5.0/gcc_64/bin/qmake
 
 # 1. Deploy Qt dependencies only (minimal)
-./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE
+./linuxdeployqt-x86_64.AppImage /path/to/your/executable -qmake=$QMAKE
 
 # 2. Deploy everything except essential system libraries (that come with all Linux distributions out of the box).
-./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE -bundle-non-qt-libs
+./linuxdeployqt-x86_64.AppImage /path/to/your/executable -qmake=$QMAKE -bundle-non-qt-libs
 
 # 3. Deploy everything except essential system libraries and build an AppImage.
-./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE -appimage
+./linuxdeployqt-x86_64.AppImage /path/to/your/executable -qmake=$QMAKE -appimage
 
 # 4. Deploy everything (including essential system libraries)
-./linuxdeployqt-x86_64.AppImage /path/to/your/app -qmake=$QMAKE -bundle-everything
+./linuxdeployqt-x86_64.AppImage /path/to/your/executable -qmake=$QMAKE -bundle-everything
 ```
 ## Calling external software from within an app image
 
