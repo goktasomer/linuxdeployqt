@@ -155,8 +155,8 @@ int main(int argc, char **argv)
 
     // Warn about use of new glibc
     const char *glcv = gnu_get_libc_version ();
-    if (strverscmp (glcv, "2.28") >= 0) {
-        qInfo() << "WARNING: The host system is too new (glibc > 2.27). To ensure compatibility, consider running";
+    if (strverscmp (glcv, "2.32") >= 0) {
+        qInfo() << "WARNING: The host system is too new (glibc > 2.31). To ensure compatibility, consider running";
         qInfo() << "         linuxdeployqt on a still-supported mainstream Linux distribution. This will allow the";
         qInfo() << "         resulting bundle to work on most still-supported distributions.";
     }
