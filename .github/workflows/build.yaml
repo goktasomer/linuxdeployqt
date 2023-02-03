@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: omergoktas/qt6bionic:qtbase
+    container: omergoktas/qt6docker:qtbase
 
     steps:
     - uses: actions/checkout@v3
