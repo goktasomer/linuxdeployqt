@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 
 project(linuxdeployqt
     LANGUAGES CXX
-    VERSION 2.2.2
+    VERSION 2.2.3
     HOMEPAGE_URL omergoktas.com
     DESCRIPTION "Qt dependency deployment tool for Linux."
 )

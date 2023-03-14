@@ -1726,13 +1726,8 @@ bool checkAppImagePrerequisites(const QString &appDirPath)
 int createAppImage(const QString &appDirPath)
 {
     QString updateInfoArgument;
-
-    if (updateInformation.isEmpty()) {
-        // if there is no user-supplied update info, guess
-        updateInfoArgument = "-g";
-    } else {
+    if (!updateInformation.isEmpty())
         updateInfoArgument = QString("-u '%1'").arg(updateInformation);
-    }
 
     QString appImageCommand = "appimagetool -v '" + appDirPath + "' -n " + updateInfoArgument;
     LogNormal() << appImageCommand;
