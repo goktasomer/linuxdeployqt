@@ -11,8 +11,14 @@
 #include <QSettings>
 #include <QDirIterator>
 
-int main(int argc, char **argv)
+int main(int argc, char* argv[])
 {
+    // Establish app identity
+    QCoreApplication::setApplicationName(APP_NAME);
+    QCoreApplication::setApplicationVersion(APP_VERSION);
+    QCoreApplication::setOrganizationName(APP_URL);
+    QCoreApplication::setOrganizationDomain(APP_URL);
+
     QCoreApplication app(argc, argv);
 
     extern QString appBinaryPath;
@@ -22,7 +28,7 @@ int main(int argc, char **argv)
 
     // print version statement
     std::stringstream version;
-    version << "linuxdeployqt " << "v" APP_VERSION ;
+    version << APP_NAME << " v" APP_VERSION ;
     qInfo().noquote() << QString::fromStdString(version.str());
 
     bool plugins = true;
@@ -157,13 +163,13 @@ int main(int argc, char **argv)
     const char *glcv = gnu_get_libc_version ();
     if (strverscmp (glcv, "2.32") >= 0) {
         qInfo() << "WARNING: The host system is too new (glibc > 2.31). To ensure compatibility, consider running";
-        qInfo() << "         linuxdeployqt on a still-supported mainstream Linux distribution. This will allow the";
+        qInfo() << "         this tool on a still-supported mainstream Linux distribution. This will allow the";
         qInfo() << "         resulting bundle to work on most still-supported distributions.";
     }
 
     if (argc < 2 || (firstArgument.startsWith("-"))) {
         qInfo() << "";
-        qInfo() << "Usage: linuxdeployqt <app-binary|desktop file> [options]";
+        qInfo() << "Usage:" << APP_NAME << "<app-binary|desktop file> [options]";
         qInfo() << "";
         qInfo() << "Options:";
         qInfo() << "   -always-overwrite        : Copy files even if the target file exists.";
@@ -192,7 +198,7 @@ int main(int argc, char **argv)
         qInfo() << "   -qtlibinfix=<infix>      : Adapt the .so search if your Qt distribution has infix.";
         qInfo() << "   -version                 : Print version statement and exit.";
         qInfo() << "";
-        qInfo() << "linuxdeployqt takes an application as input and makes it";
+        qInfo() << APP_NAME << "takes an application as input and makes it";
         qInfo() << "self-contained by copying in the Qt libraries and plugins that";
         qInfo() << "the application uses.";
         qInfo() << "";

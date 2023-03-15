@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-function(deploy TARGET DEPLOY_SOURCE_DIR)
+function(deploy TARGET)
     if(APP_DEPLOY_AS_PART_OF_ALL)
         set(ALL ALL)
     endif()
@@ -9,77 +9,71 @@ function(deploy TARGET DEPLOY_SOURCE_DIR)
         add_custom_target(deploy ${ALL} DEPENDS ${TARGET})
     endif()
 
-    if(NOT IS_ABSOLUTE ${DEPLOY_SOURCE_DIR})
-        string(JOIN / DEPLOY_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} ${DEPLOY_SOURCE_DIR})
-    endif()
+    set(DEPLOY_PREFIX_PATH ${APP_DEPLOY_PREFIX}/${TARGET}.AppDir)
 
-    if(Qt6_DIR)
-        set(QMAKE_EXECUTABLE ${Qt6_DIR}/../../../bin/qmake)
-    else()
-        list(GET Qt6_LIB_DIRS 0 Qt6_DIR)
-        set(QMAKE_EXECUTABLE ${Qt6_DIR}/../bin/qmake)
-    endif()
-
-    set(LINUXDEPLOYQT_EXECUTABLE $<TARGET_FILE:${TARGET}>)
-    set(DEPLOY_APPDIR_PATH ${APP_DEPLOY_DIR}/$<TARGET_FILE_NAME:${TARGET}>.AppDir)
-    set(DEPLOY_PREFIX_PATH ${DEPLOY_APPDIR_PATH}/usr)
-
+    find_program(LINUXDEPLOYQT_EXECUTABLE linuxdeployqt)
     find_program(APPIMAGETOOL_EXECUTABLE appimagetool)
+    find_program(PATCHELF_EXECUTABLE patchelf REQUIRED)
+
+    if(NOT LINUXDEPLOYQT_EXECUTABLE)
+        message(STATUS "Could NOT find linuxdeployqt, downloading...")
+        set(LINUXDEPLOYQT_EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/linuxdeployqt.run)
+        set(LINUXDEPLOYQT_URL "https://github.com/omergoktas/linuxdeployqt/releases/download/latest/linuxdeployqt-${CMAKE_SYSTEM_PROCESSOR}.AppImage")
+        file(DOWNLOAD ${LINUXDEPLOYQT_URL} ${LINUXDEPLOYQT_EXECUTABLE} SHOW_PROGRESS)
+        file(CHMOD ${LINUXDEPLOYQT_EXECUTABLE} PERMISSIONS OWNER_READ OWNER_EXECUTE)
+    endif()
 
     if(NOT APPIMAGETOOL_EXECUTABLE)
         message(STATUS "Could NOT find appimagetool, downloading...")
         set(APPIMAGETOOL_EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/appimagetool)
-        set(APPIMAGETOOL_URL "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage")
+        set(APPIMAGETOOL_URL "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${CMAKE_SYSTEM_PROCESSOR}.AppImage")
         file(DOWNLOAD ${APPIMAGETOOL_URL} ${APPIMAGETOOL_EXECUTABLE} SHOW_PROGRESS)
         file(CHMOD ${APPIMAGETOOL_EXECUTABLE} PERMISSIONS OWNER_READ OWNER_EXECUTE)
-        add_custom_command(TARGET deploy VERBATIM
-            COMMAND ${APPIMAGETOOL_EXECUTABLE} --appimage-extract
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        )
-        add_custom_command(TARGET deploy VERBATIM
-            COMMAND ${CMAKE_COMMAND} -E rm -f ${APPIMAGETOOL_EXECUTABLE}
-        )
-        add_custom_command(TARGET deploy VERBATIM
-            COMMAND ${CMAKE_COMMAND} -E create_symlink
-            ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/AppRun ${APPIMAGETOOL_EXECUTABLE}
-        )
     endif()
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/icon.desktop
+        ${DEPLOY_PREFIX_PATH}/${TARGET}.desktop @ONLY)
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E make_directory
-        ${DEPLOY_PREFIX_PATH}/bin
-        ${DEPLOY_PREFIX_PATH}/lib
+        ${DEPLOY_PREFIX_PATH}/usr/bin
+        ${DEPLOY_PREFIX_PATH}/usr/lib
+    )
+
+    add_custom_command(TARGET deploy VERBATIM
+        COMMAND ${APPIMAGETOOL_EXECUTABLE} --appimage-extract
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${DEPLOY_SOURCE_DIR}/Template.AppDir ${DEPLOY_APPDIR_PATH}
+        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/bin ${DEPLOY_PREFIX_PATH}/usr/bin
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/bin ${DEPLOY_PREFIX_PATH}/bin
+        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/lib ${DEPLOY_PREFIX_PATH}/usr/lib
     )
 
     add_custom_command(TARGET deploy VERBATIM
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/lib ${DEPLOY_PREFIX_PATH}/lib
+        COMMAND ${CMAKE_COMMAND} -E rm -f ${DEPLOY_PREFIX_PATH}/usr/bin/AppRun
     )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        /usr/bin/patchelf $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/bin
+        ${PATCHELF_EXECUTABLE} $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/usr/bin
     )
 
     add_custom_command(TARGET deploy VERBATIM
-        COMMAND ${CMAKE_COMMAND} -E rm -f ${DEPLOY_PREFIX_PATH}/bin/AppRun
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        icon.svg ${DEPLOY_PREFIX_PATH}/${TARGET}.svg
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
     add_custom_command(TARGET deploy VERBATIM
-        COMMAND ${LINUXDEPLOYQT_EXECUTABLE}
-        ${DEPLOY_PREFIX_PATH}/bin/$<TARGET_FILE_NAME:${TARGET}>
-        -appimage
-        -qmake="${QMAKE_EXECUTABLE}"
-        WORKING_DIRECTORY ${APP_DEPLOY_DIR}
+        COMMAND ARCH=${CMAKE_SYSTEM_PROCESSOR} ${LINUXDEPLOYQT_EXECUTABLE}
+        ${DEPLOY_PREFIX_PATH}/usr/bin/$<TARGET_FILE_NAME:${TARGET}>
+        -appimage -no-translations -qmake=${QMAKE_EXECUTABLE}
+        WORKING_DIRECTORY ${APP_DEPLOY_PREFIX}
     )
 endfunction()

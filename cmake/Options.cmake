@@ -12,7 +12,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         "The directory to put installation files." FORCE)
 endif()
 
-set(APP_DEPLOY_DIR ${CMAKE_CURRENT_BINARY_DIR}/deploy CACHE PATH
+set(APP_DEPLOY_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/deploy CACHE PATH
     "The directory to put deployment packages.")
 
 if(CMAKE_BUILD_TYPE STREQUAL Debug)

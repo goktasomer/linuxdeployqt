@@ -1,23 +1,23 @@
 cmake_minimum_required(VERSION 3.19)
 
-project(linuxdeployqt
-    LANGUAGES CXX
-    VERSION 2.2.3
-    HOMEPAGE_URL omergoktas.com
-    DESCRIPTION "Qt dependency deployment tool for Linux."
-)
-
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
 )
 
 include(Options)
+
+project(linuxdeployqt
+    LANGUAGES CXX
+    VERSION 2.3.0
+    HOMEPAGE_URL omergoktas.com
+    DESCRIPTION "Qt dependency deployment tool for Linux."
+)
+
 include(Setup)
-
-find_package(Qt6 REQUIRED Core)
-
 include(Deploy)
+
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED Core)
 
 qt_add_executable(linuxdeployqt
     main.cpp
@@ -27,4 +27,4 @@ qt_add_executable(linuxdeployqt
 
 install(TARGETS linuxdeployqt DESTINATION bin)
 
-deploy(linuxdeployqt deploy)
+deploy(linuxdeployqt)

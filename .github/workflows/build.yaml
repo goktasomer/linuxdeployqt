@@ -1,4 +1,4 @@
-name: Automated GitHub Releases
+name: Automated Builds
 
 on:
   push:
@@ -8,28 +8,31 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container: omergoktas/qt6docker:qtbase
+    runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Download source codes
+      uses: actions/checkout@v3
 
-    - name: Install required packages
-      shell: bash
+    - name: Install dependencies
       run: |
-        apt-get update -y
-        apt-get install -y patchelf
+        sudo apt-get update -y
+        sudo apt-get install -y build-essential patchelf libfuse2
 
-    - name: Configure the project
-      run: cmake -S . -B build -G Ninja
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.0'
+        cache: 'true'
+        install-deps: 'false'
 
     - name: Build the project
-      run: cmake --build build --parallel
+      run: |
+        cmake -S . -B build
+        cmake --build build --parallel --config Release
 
-    - uses: "marvinpinto/action-automatic-releases@latest"
+    - name: Publish build artifacts
+      uses: softprops/action-gh-release@v1
       with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "latest"
-        title: "latest"
-        prerelease: false
-        files: build/deploy/linuxdeployqt-x86_64.AppImage
+        tag_name: latest
+        files: build/deploy/*.AppImage
