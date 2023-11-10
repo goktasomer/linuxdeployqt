@@ -14,7 +14,7 @@ extern int logLevel;
 
 extern QString appBinaryPath;
 extern bool runStripEnabled;
-extern bool bundleAllButCoreLibs;
+extern bool bundleAllButBlacklistedLibs;
 extern bool bundleEverything;
 extern bool fhsLikeMode;
 extern QString fhsPrefix;

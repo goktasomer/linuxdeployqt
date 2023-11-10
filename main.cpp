@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
     bool plugins = true;
     bool appimage = false;
     extern bool runStripEnabled;
-    extern bool bundleAllButCoreLibs;
+    extern bool bundleAllButBlacklistedLibs;
     extern bool bundleEverything;
     extern bool fhsLikeMode;
     extern QString fhsPrefix;
@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
         } else if (argument == QByteArray("-appimage")) {
             LogDebug() << "Argument found:" << argument;
             appimage = true;
-            bundleAllButCoreLibs = true;
+            bundleAllButBlacklistedLibs = true;
         } else if (argument == QByteArray("-bundle-everything")) {
             LogDebug() << "Argument found:" << argument;
             bundleEverything = true;
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
             runStripEnabled = false;
         } else if (argument == QByteArray("-bundle-non-qt-libs")) {
             LogDebug() << "Argument found:" << argument;
-            bundleAllButCoreLibs = true;
+            bundleAllButBlacklistedLibs = true;
         } else if (argument.startsWith(QByteArray("-verbose"))) {
             LogDebug() << "Argument found:" << argument;
             int index = argument.indexOf("=");

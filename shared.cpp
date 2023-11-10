@@ -75,7 +75,7 @@ QStringList excludedLibraries {
 };
 QString appBinaryPath;
 bool runStripEnabled = true;
-bool bundleAllButCoreLibs = false;
+bool bundleAllButBlacklistedLibs = false;
 bool bundleEverything = false;
 bool fhsLikeMode = false;
 QString fhsPrefix;
@@ -470,7 +470,7 @@ LibraryInfo parseLddLibraryLine(const QString &line, const QString &appDirPath, 
         return info;
 
     if(!bundleEverything) {
-        if(bundleAllButCoreLibs) {
+        if(bundleAllButBlacklistedLibs) {
             /*
               Bundle every lib including the low-level ones except those that are explicitly blacklisted.
               This is more suitable for bundling in a way that is portable between different distributions and target systems.
