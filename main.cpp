@@ -162,9 +162,9 @@ int main(int argc, char* argv[])
     // Warn about use of new glibc
     const char *glcv = gnu_get_libc_version ();
     if (strverscmp (glcv, "2.32") >= 0) {
-        qInfo() << "WARNING: The host system is too new (glibc > 2.31). To ensure compatibility, consider running";
-        qInfo() << "         this tool on a still-supported mainstream Linux distribution. This will allow the";
-        qInfo() << "         resulting bundle to work on most still-supported distributions.";
+        qInfo() << "WARNING: The host system is too new (glibc > 2.31). To ensure compatibility with older systems,";
+        qInfo() << "         please consider running this tool on an older mainstream Linux distribution. This will";
+        qInfo() << "         allow the resulting bundle to work on most Linux distributions, including the older ones.";
     }
 
     if (argc < 2 || (firstArgument.startsWith("-"))) {
