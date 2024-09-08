@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
             runStripEnabled = false;
         } else if (argument == QByteArray("-bundle-non-qt-libs")) {
             LogDebug() << "Argument found:" << argument;
-            bundleAllButCoreLibs = true;
+            bundleAllButBlacklistedLibs = true;
         } else if (argument.startsWith(QByteArray("-verbose"))) {
             LogDebug() << "Argument found:" << argument;
             int index = argument.indexOf("=");
