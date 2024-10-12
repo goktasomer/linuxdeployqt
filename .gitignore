@@ -12,6 +12,7 @@
 *_pch.h.cpp
 *_resource.rc
 *.qm
+**/.qmlls.ini
 .#*
 *.*#
 core
@@ -28,7 +29,6 @@ ui_*.h
 qrc_*.cpp
 Thumbs.db
 *.res
-*.rc
 /.qmake.cache
 /.qmake.stash
 
@@ -68,3 +68,7 @@ Thumbs.db
 # --------
 *.dll
 *.exe
+
+# Build folder
+# --------
+build/*

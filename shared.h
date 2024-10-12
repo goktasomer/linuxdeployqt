@@ -1,10 +1,9 @@
-#ifndef SHARED_H
-#define SHARED_H
+#pragma once
 
-#include <QString>
-#include <QStringList>
 #include <QDebug>
 #include <QSet>
+#include <QString>
+#include <QStringList>
 
 extern int logLevel;
 #define LogError()   if (logLevel < 0) {} else qDebug() << "ERROR:"
@@ -54,8 +53,8 @@ public:
     QList<DylibInfo> dependencies;
 };
 
-bool operator==(const LibraryInfo &a, const LibraryInfo &b);
-QDebug operator<<(QDebug debug, const LibraryInfo &info);
+bool operator==(const LibraryInfo& a, const LibraryInfo& b);
+QDebug operator<<(QDebug debug, const LibraryInfo& info);
 
 class AppDirInfo
 {
@@ -78,36 +77,52 @@ public:
     bool requiresQtWidgetsLibrary;
 };
 
-inline QDebug operator<<(QDebug debug, const AppDirInfo &info);
+inline QDebug operator<<(QDebug debug, const AppDirInfo& info);
 
-void changeQtLibraries(const QString appPath, const QString &qtPath);
-void changeQtLibraries(const QList<LibraryInfo> libraries, const QStringList &binaryPaths, const QString &qtPath);
+void changeQtLibraries(const QString appPath, const QString& qtPath);
+void changeQtLibraries(const QList<LibraryInfo> libraries,
+                       const QStringList& binaryPaths,
+                       const QString& qtPath);
 
-LddInfo findDependencyInfo(const QString &binaryPath);
-LibraryInfo parseLddLibraryLine(const QString &line, const QString &appDirPath, const QSet<QString> &rpaths);
-QString findAppBinary(const QString &appDirPath);
-QList<LibraryInfo> getQtLibraries(const QString &path, const QString &appDirPath, const QSet<QString> &rpaths);
-QList<LibraryInfo> getQtLibraries(const QStringList &lddLines, const QString &appDirPath, const QSet<QString> &rpaths);
-QString copyLibrary(const LibraryInfo &library, const QString path);
-DeploymentInfo deployQtLibraries(const QString &appDirPath,
-                                 const QStringList &additionalExecutables,
-                                 const QString &qmake);
-DeploymentInfo deployQtLibraries(QList<LibraryInfo> libraries,const QString &bundlePath, const QStringList &binaryPaths, bool useLoaderPath);
-void createQtConf(const QString &appDirPath);
-void createQtConfForQtWebEngineProcess(const QString &appDirPath);
-void deployPlugins(const QString &appDirPath, DeploymentInfo deploymentInfo);
-bool deployQmlImports(const QString &appDirPath, DeploymentInfo deploymentInfo, QStringList &qmlDirs, QStringList &qmlImportPaths);
-void changeIdentification(const QString &id, const QString &binaryPath);
-void changeInstallName(const QString &oldName, const QString &newName, const QString &binaryPath);
-void runStrip(const QString &binaryPath);
-void stripAppBinary(const QString &bundlePath);
-QString findAppBinary(const QString &appDirPath);
-QStringList findAppLibraries(const QString &appDirPath);
-bool patchQtCore(const QString &path, const QString &variable, const QString &value);
-int createAppImage(const QString &appBundlePath);
-bool checkAppImagePrerequisites(const QString &appBundlePath);
-void findUsedModules(DeploymentInfo &info);
-void deployTranslations(const QString &appDirPath, quint64 usedQtModules);
-bool deployTranslations(const QString &sourcePath, const QString &target, quint64 usedQtModules);
-
-#endif // SHARED_H
+LddInfo findDependencyInfo(const QString& binaryPath);
+LibraryInfo parseLddLibraryLine(const QString& line,
+                                const QString& appDirPath,
+                                const QSet<QString>& rpaths);
+QString findAppBinary(const QString& appDirPath);
+QList<LibraryInfo> getQtLibraries(const QString& path,
+                                  const QString& appDirPath,
+                                  const QSet<QString>& rpaths);
+QList<LibraryInfo> getQtLibraries(const QStringList& lddLines,
+                                  const QString& appDirPath,
+                                  const QSet<QString>& rpaths);
+QString copyLibrary(const LibraryInfo& library, const QString path);
+DeploymentInfo deployQtLibraries(const QString& appDirPath,
+                                 const QStringList& additionalExecutables,
+                                 const QString& qmake);
+DeploymentInfo deployQtLibraries(QList<LibraryInfo> libraries,
+                                 const QString& bundlePath,
+                                 const QStringList& binaryPaths,
+                                 bool useLoaderPath);
+void createQtConf(const QString& appDirPath);
+void createQtConfForQtWebEngineProcess(const QString& appDirPath);
+void deployPlugins(const QString& appDirPath, DeploymentInfo deploymentInfo);
+bool deployQmlImports(const QString& appDirPath,
+                      DeploymentInfo deploymentInfo,
+                      QStringList& qmlDirs,
+                      QStringList& qmlImportPaths);
+void changeIdentification(const QString& id, const QString& binaryPath);
+void changeInstallName(const QString& oldName,
+                       const QString& newName,
+                       const QString& binaryPath);
+void runStrip(const QString& binaryPath);
+void stripAppBinary(const QString& bundlePath);
+QString findAppBinary(const QString& appDirPath);
+QStringList findAppLibraries(const QString& appDirPath);
+bool patchQtCore(const QString& path, const QString& variable, const QString& value);
+int createAppImage(const QString& appBundlePath);
+bool checkAppImagePrerequisites(const QString& appBundlePath);
+void findUsedModules(DeploymentInfo& info);
+void deployTranslations(const QString& appDirPath, quint64 usedQtModules);
+bool deployTranslations(const QString& sourcePath,
+                        const QString& target,
+                        quint64 usedQtModules);
