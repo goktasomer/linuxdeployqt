@@ -11,17 +11,8 @@ function(deploy TARGET)
 
     set(DEPLOY_PREFIX_PATH ${APP_DEPLOY_PREFIX}/${TARGET}.AppDir)
 
-    find_program(LINUXDEPLOYQT_EXECUTABLE linuxdeployqt)
     find_program(APPIMAGETOOL_EXECUTABLE appimagetool)
     find_program(PATCHELF_EXECUTABLE patchelf REQUIRED)
-
-    if(NOT LINUXDEPLOYQT_EXECUTABLE)
-        message(STATUS "Could NOT find linuxdeployqt, downloading...")
-        set(LINUXDEPLOYQT_EXECUTABLE ${CMAKE_CURRENT_BINARY_DIR}/linuxdeployqt.run)
-        set(LINUXDEPLOYQT_URL "https://github.com/omergoktas/linuxdeployqt/releases/download/latest/linuxdeployqt-${CMAKE_SYSTEM_PROCESSOR}.AppImage")
-        file(DOWNLOAD ${LINUXDEPLOYQT_URL} ${LINUXDEPLOYQT_EXECUTABLE} SHOW_PROGRESS)
-        file(CHMOD ${LINUXDEPLOYQT_EXECUTABLE} PERMISSIONS OWNER_READ OWNER_EXECUTE)
-    endif()
 
     if(NOT APPIMAGETOOL_EXECUTABLE)
         message(STATUS "Could NOT find appimagetool, downloading...")
@@ -71,7 +62,7 @@ function(deploy TARGET)
     )
 
     add_custom_command(TARGET deploy VERBATIM
-        COMMAND ARCH=${CMAKE_SYSTEM_PROCESSOR} ${LINUXDEPLOYQT_EXECUTABLE}
+        COMMAND ARCH=${CMAKE_SYSTEM_PROCESSOR} $<TARGET_FILE:${TARGET}>
         ${DEPLOY_PREFIX_PATH}/usr/bin/$<TARGET_FILE_NAME:${TARGET}>
         -appimage -no-translations -qmake=${QMAKE_EXECUTABLE}
         WORKING_DIRECTORY ${APP_DEPLOY_PREFIX}
