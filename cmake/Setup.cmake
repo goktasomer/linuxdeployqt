@@ -19,6 +19,8 @@ endif()
 find_package(QT NAMES Qt6 REQUIRED Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED Core)
 
+qt_standard_project_setup(REQUIRES 6.7.3 SUPPORTS_UP_TO 6.9.99)
+
 add_compile_definitions(APP_NAME="${CMAKE_PROJECT_NAME}")
 add_compile_definitions(APP_VERSION="${CMAKE_PROJECT_VERSION}")
 add_compile_definitions(APP_URL="${CMAKE_PROJECT_HOMEPAGE_URL}")
