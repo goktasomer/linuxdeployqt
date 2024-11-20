@@ -399,7 +399,11 @@ int main(int argc, char* argv[])
         qDebug() << "Keeping existing AppRun";
     } else {
         if (QFile::copy(":/assets/AppRun", appDirPath + "/AppRun")) {
-            if (!QFile::setPermissions(appDirPath + "/AppRun", QFile::ExeUser)) {
+            if (!QFile::setPermissions(appDirPath + "/AppRun",
+                                       QFile::ReadOwner | QFile::ReadGroup
+                                           | QFile::ReadOther | QFile::ExeOwner
+                                           | QFile::ExeGroup | QFile::WriteOwner
+                                           | QFile::WriteGroup)) {
                 LogError() << "Could not set permissions on AppRun";
             }
         } else {
