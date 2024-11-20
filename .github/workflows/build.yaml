@@ -1,5 +1,8 @@
 name: Automated Builds
 
+env:
+  QT_VERSION: '6.7.3'
+
 on:
   push:
     branches: [ "master" ]
@@ -10,7 +13,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Download source codes
@@ -19,19 +22,23 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y build-essential patchelf libfuse2
+        sudo apt-get install -y build-essential ninja-build patchelf libfuse2
+        pip install aqtinstall
 
     - name: Install Qt
-      uses: jurplel/install-qt-action@v3
-      with:
-        version: '6.5.0'
-        cache: 'true'
-        install-deps: 'false'
-
-    - name: Build the project
       run: |
-        cmake -S . -B build
-        cmake --build build --parallel --config Release
+        python3 -m aqt install-qt linux desktop $QT_VERSION linux_gcc_64 -O /tmp/qt -m $QT_MODULES
+        python3 -m aqt install-qt linux_arm64 desktop $QT_VERSION linux_gcc_arm64 -O /tmp/qt -m $QT_MODULES
+
+    - name: Build for amd64
+      run: |
+        chmod +x /tmp/qt/$QT_VERSION/gcc_64/bin/qt-cmake
+        /tmp/qt/$QT_VERSION/gcc_64/bin/qt-cmake \
+          -S . \
+          -B build-amd64 \
+          -G Ninja \
+          -D CMAKE_BUILD_TYPE=Release
+        cmake --build build-amd64 --parallel --config Release
 
     - name: Publish build artifacts
       uses: marvinpinto/action-automatic-releases@latest
