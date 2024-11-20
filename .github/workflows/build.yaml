@@ -27,8 +27,8 @@ jobs:
 
     - name: Install Qt
       run: |
-        python3 -m aqt install-qt linux desktop $QT_VERSION linux_gcc_64 -O /tmp/qt -m $QT_MODULES
-        python3 -m aqt install-qt linux_arm64 desktop $QT_VERSION linux_gcc_arm64 -O /tmp/qt -m $QT_MODULES
+        python3 -m aqt install-qt linux desktop $QT_VERSION linux_gcc_64 -O /tmp/qt
+        python3 -m aqt install-qt linux_arm64 desktop $QT_VERSION linux_gcc_arm64 -O /tmp/qt
 
     - name: Build for amd64
       run: |

@@ -398,7 +398,11 @@ int main(int argc, char* argv[])
     if (appRun.exists()) {
         qDebug() << "Keeping existing AppRun";
     } else {
-        if (!QFile::copy(":/assets/AppRun", appDirPath + "/AppRun")) {
+        if (QFile::copy(":/assets/AppRun", appDirPath + "/AppRun")) {
+            if (!QFile::setPermissions(appDirPath + "/AppRun", QFile::ExeUser)) {
+                LogError() << "Could not set permissions on AppRun";
+            }
+        } else {
             LogError() << "Could not copy AppRun";
         }
     }
