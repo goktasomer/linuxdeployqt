@@ -25,42 +25,42 @@ function(deploy TARGET)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deploy/icon.desktop
         ${DEPLOY_PREFIX_PATH}/${TARGET}.desktop @ONLY)
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_CURRENT_SOURCE_DIR}/deploy/icon.svg ${DEPLOY_PREFIX_PATH}/${TARGET}.svg
     )
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory
         ${DEPLOY_PREFIX_PATH}/usr/bin
         ${DEPLOY_PREFIX_PATH}/usr/lib
     )
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ${APPIMAGETOOL_EXECUTABLE} --appimage-extract
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/bin ${DEPLOY_PREFIX_PATH}/usr/bin
     )
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_BINARY_DIR}/squashfs-root/usr/lib ${DEPLOY_PREFIX_PATH}/usr/lib
     )
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E rm -f ${DEPLOY_PREFIX_PATH}/usr/bin/AppRun
     )
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PATCHELF_EXECUTABLE} $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/usr/bin
     )
 
-    add_custom_command(TARGET deploy VERBATIM
+    add_custom_command(TARGET deploy VERBATIM POST_BUILD
         COMMAND ARCH=${CMAKE_SYSTEM_PROCESSOR} $<TARGET_FILE:${TARGET}>
         ${DEPLOY_PREFIX_PATH}/usr/bin/$<TARGET_FILE_NAME:${TARGET}>
         -appimage -no-translations -qmake=${QMAKE_EXECUTABLE}

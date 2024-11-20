@@ -13,7 +13,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+          - os: ubuntu-22.04-arm64-2core
+
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
     steps:
     - name: Download source codes
@@ -24,13 +31,20 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install -y build-essential ninja-build patchelf libfuse2 libglib2.0-dev
         pip install aqtinstall
+        mkdir executables
 
     - name: Install Qt
+      if: matrix.os == 'ubuntu-22.04'
       run: |
         python3 -m aqt install-qt linux desktop $QT_VERSION linux_gcc_64 -O /tmp/qt
+
+    - name: Install Qt
+      if: matrix.os == 'ubuntu-22.04-arm64-2core'
+      run: |
         python3 -m aqt install-qt linux_arm64 desktop $QT_VERSION linux_gcc_arm64 -O /tmp/qt
 
     - name: Build for amd64
+      if: matrix.os == 'ubuntu-22.04'
       run: |
         chmod +x /tmp/qt/$QT_VERSION/gcc_64/bin/qt-cmake
         /tmp/qt/$QT_VERSION/gcc_64/bin/qt-cmake \
@@ -39,42 +53,55 @@ jobs:
           -G Ninja \
           -D CMAKE_BUILD_TYPE=Release
         cmake --build build-amd64 --parallel --config Release
-
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
-      with:
-        platforms: arm64
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+        cp build-amd64/deploy/*.AppImage executables
 
     - name: Build for Linux arm64
+      if: matrix.os == 'ubuntu-22.04-arm64-2core'
       run: |
-        sudo docker run \
-          --rm \
-          --platform linux/arm64 \
-          -v /tmp/qt:/tmp/qt \
-          -v `pwd`:/tmp/qtapp \
-          arm64v8/ubuntu:22.04 \
-          bash -c '
-            cd /tmp/qtapp
-            apt-get update -y
-            apt-get install -y build-essential cmake ninja-build patchelf libfuse2 libglib2.0-dev
-            chmod +x /tmp/qt/'"$QT_VERSION"'/gcc_arm64/bin/qt-cmake
-            /tmp/qt/'"$QT_VERSION"'/gcc_arm64/bin/qt-cmake \
-              -S . \
-              -B build-arm64 \
-              -G Ninja \
-              -D CMAKE_BUILD_TYPE=Release
-            sed -i "s|AI\x02|\x00\x00\x00|" build-arm64/appimagetool
-            cmake --build build-arm64 --parallel --config Release
-        '
+        chmod +x /tmp/qt/$QT_VERSION/gcc_arm64/bin/qt-cmake
+        /tmp/qt/$QT_VERSION/gcc_arm64/bin/qt-cmake \
+          -S . \
+          -B build-arm64 \
+          -G Ninja \
+          -D CMAKE_BUILD_TYPE=Release
+        cmake --build build-arm64 --parallel --config Release
+        cp build-arm64/deploy/*.AppImage executables
 
-    - name: Publish build artifacts
-      uses: marvinpinto/action-automatic-releases@latest
+    - name: Cache executables for publication
+      uses: actions/cache/save@v4
+      with:
+        enableCrossOsArchive: true
+        key: ${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: executables
+
+  publish:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions: write-all
+
+    steps:
+    - name: Restore Linux amd64 executables
+      uses: actions/cache/restore@v4
+      with:
+        fail-on-cache-miss: true
+        key: ubuntu-22.04-${{ github.run_id }}-${{ github.run_attempt }}
+        path: executables
+
+    - name: Restore Linux arm64 executables
+      uses: actions/cache/restore@v4
+      with:
+        fail-on-cache-miss: true
+        key: ubuntu-22.04-arm64-2core-${{ github.run_id }}-${{ github.run_attempt }}
+        path: executables
+
+    - name: Publish executables
+      uses: marvinpinto/action-automatic-releases@v1.2.1
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         automatic_release_tag: latest
         title: latest
         prerelease: false
-        files: build/deploy/*.AppImage
+        files: |
+          executables/*.AppImage
+
