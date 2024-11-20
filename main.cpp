@@ -398,8 +398,7 @@ int main(int argc, char* argv[])
     if (appRun.exists()) {
         qDebug() << "Keeping existing AppRun";
     } else {
-        if (!QFile::copy(QCoreApplication::applicationDirPath() + "/../../AppRun",
-                         appDirPath + "/AppRun")) {
+        if (!QFile::copy(":/assets/AppRun", appDirPath + "/AppRun")) {
             LogError() << "Could not copy AppRun";
         }
     }

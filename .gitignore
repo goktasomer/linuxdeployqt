@@ -72,3 +72,78 @@ Thumbs.db
 # Build folder
 # --------
 build/*
+
+
+# .gitattributes snippet to force users to use same line endings for project.
+# 
+# Handle line endings automatically for files detected as text
+# and leave all files detected as binary untouched.
+* text=auto eol=lf
+
+# The above will handle all files NOT found below
+# https://help.github.com/articles/dealing-with-line-endings/
+# https://github.com/Danimoth/gitattributes/blob/master/Web.gitattributes
+
+# These files are text and should be normalized (Convert crlf => lf)
+*.md text
+*.txt text
+*.cmake text
+*.pro text
+*.pri text
+*.c text
+*.m text
+*.mm text
+*.cpp text
+*.cxx text
+*.h text
+*.hpp text
+*.qml text
+*.java text
+*.desktop text
+*.conf text
+*.applescript text
+*.plist text
+*.properties text
+*.gradle text
+*.php text
+*.cs text
+*.css text
+*.js text
+*.json text
+*.htm text
+*.html text
+*.xml text
+*.svg text
+*.ini text
+*.inc text
+*.pl text
+*.rb text
+*.py text
+*.scm text
+*.sql text
+*.sh text
+.htaccess text
+.clang-format text
+
+# These files are binary and should be left untouched
+# (binary is a macro for -text -diff)
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.flv binary
+*.fla binary
+*.swf binary
+*.gz binary
+*.tar binary
+*.zip binary
+*.7z binary
+*.ttf binary
+*.pyc binary
+
+*.bat text eol=crlf

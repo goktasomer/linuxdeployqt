@@ -22,8 +22,13 @@ function(deploy TARGET)
         file(CHMOD ${APPIMAGETOOL_EXECUTABLE} PERMISSIONS OWNER_READ OWNER_EXECUTE)
     endif()
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/icon.desktop
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/deploy/icon.desktop
         ${DEPLOY_PREFIX_PATH}/${TARGET}.desktop @ONLY)
+
+    add_custom_command(TARGET deploy VERBATIM
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/deploy/icon.svg ${DEPLOY_PREFIX_PATH}/${TARGET}.svg
+    )
 
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E make_directory
@@ -53,12 +58,6 @@ function(deploy TARGET)
     add_custom_command(TARGET deploy VERBATIM
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${PATCHELF_EXECUTABLE} $<TARGET_FILE:${TARGET}> ${DEPLOY_PREFIX_PATH}/usr/bin
-    )
-
-    add_custom_command(TARGET deploy VERBATIM
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        icon.svg ${DEPLOY_PREFIX_PATH}/${TARGET}.svg
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
     add_custom_command(TARGET deploy VERBATIM

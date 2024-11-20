@@ -9,7 +9,7 @@ include(Options)
 
 project(linuxdeployqt
     LANGUAGES CXX
-    VERSION 2.5.0
+    VERSION 2.5.1
     HOMEPAGE_URL omergoktas.com
     DESCRIPTION "Qt dependency deployment tool for Linux."
 )
@@ -23,6 +23,13 @@ qt_add_executable(linuxdeployqt
     main.cpp
     shared.h
     shared.cpp
+)
+
+qt_add_resources(
+    linuxdeployqt
+    linuxdeployqt_assets
+    FILES
+        assets/AppRun
 )
 
 install(TARGETS linuxdeployqt DESTINATION bin)
